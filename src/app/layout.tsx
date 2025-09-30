@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   title: "Plavel",
   description: "Plan your travel, with Plavel.",
   icons: {
-    icon: "/plavel_colourful.svg",
+    icon: "/plavel_logo.svg",
   },
 };
 
