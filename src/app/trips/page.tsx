@@ -1,22 +1,14 @@
 import { auth } from "@/auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import InvalidSession from "@/lib/invalidSession";
 import { prisma } from "@/lib/prisma";
-import Image from "next/image";
 import Link from "next/link";
 
 export default async function TripsPage() {
   const session = await auth();
-
   if (!session || !session?.user || !session.user?.id) {
-    return (
-      <main className="flex min-h-screen flex-col items-center justify-center p-24">
-        <h1 className="text-4xl font-bold">
-          You must be logged in to view this page...
-        </h1>
-        <Image src="/crying_penguin.svg" alt="Error" width={400} height={400} />
-      </main>
-    );
+    return <InvalidSession />;
   }
 
   const trips = await prisma.trip.findMany({
@@ -34,7 +26,6 @@ export default async function TripsPage() {
   const upcomingTrips = sortedTrips.filter(
     (trip) => new Date(trip.startDate) >= today
   );
-
 
   return (
     <main className="space-y-6 container mx-auto px-4 py-8">
@@ -90,14 +81,17 @@ export default async function TripsPage() {
                         {trip.description}
                       </p>
                       <div className="text-sm text-gray-500">
-                        {new Date(trip.startDate).toLocaleDateString(
-                          undefined,
-                          { year: "numeric", month: "short", day: "numeric" }
-                        )} -{" "}
-                        {new Date(trip.endDate).toLocaleDateString(
-                          undefined,
-                          { year: "numeric", month: "short", day: "numeric" }
-                        )}
+                        {new Date(trip.startDate).toLocaleDateString("en-SG", {
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric",
+                        })}{" "}
+                        -{" "}
+                        {new Date(trip.endDate).toLocaleDateString("en-SG", {
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric",
+                        })}
                       </div>
                     </CardContent>
                   </Card>
