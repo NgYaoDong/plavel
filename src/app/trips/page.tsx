@@ -1,6 +1,12 @@
 import { auth } from "@/auth";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import InvalidSession from "@/lib/invalidSession";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
@@ -70,32 +76,39 @@ export default async function TripsPage() {
             </>
           ) : (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {sortedTrips.slice(0, 6).map((trip) => (
-                <Link key={trip.id} href={`/trips/${trip.id}`}>
-                  <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
-                    <CardHeader>
-                      <CardTitle>{trip.title}</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-sm line-clamp-2 mb-2">
-                        {trip.description}
-                      </p>
-                      <div className="text-sm text-gray-500">
-                        {new Date(trip.startDate).toLocaleDateString("en-SG", {
-                          year: "numeric",
-                          month: "short",
-                          day: "numeric",
-                        })}{" "}
-                        -{" "}
-                        {new Date(trip.endDate).toLocaleDateString("en-SG", {
-                          year: "numeric",
-                          month: "short",
-                          day: "numeric",
-                        })}
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
+              {sortedTrips.map((trip) => (
+                <div key={trip.id} className="h-full">
+                  <Link href={`/trips/${trip.id}`}>
+                    <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
+                      <CardHeader>
+                        <CardTitle>{trip.title}</CardTitle>
+                      </CardHeader>
+                      <CardContent className="flex-1">
+                        <p className="text-sm line-clamp-2">
+                          {trip.description}
+                        </p>
+                      </CardContent>
+                      <CardFooter>
+                        <div className="text-sm text-gray-500">
+                          {new Date(trip.startDate).toLocaleDateString(
+                            "en-SG",
+                            {
+                              year: "numeric",
+                              month: "short",
+                              day: "numeric",
+                            }
+                          )}{" "}
+                          -{" "}
+                          {new Date(trip.endDate).toLocaleDateString("en-SG", {
+                            year: "numeric",
+                            month: "short",
+                            day: "numeric",
+                          })}
+                        </div>
+                      </CardFooter>
+                    </Card>
+                  </Link>
+                </div>
               ))}
             </div>
           )}
