@@ -30,7 +30,7 @@ export async function createTrip(formData: FormData) {
     throw new Error("Start date must be before end date");
   }
 
-  await prisma.trip.create({
+  const trip = await prisma.trip.create({
     data: {
       title,
       description: description || null,
@@ -45,5 +45,5 @@ export async function createTrip(formData: FormData) {
     },
   });
 
-  redirect(`/trips`);
+  redirect(`/trips/${trip.id}`);
 }
