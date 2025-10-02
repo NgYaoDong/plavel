@@ -4,10 +4,11 @@ import { Location } from "@/generated/prisma";
 import { GoogleMap, Marker, useLoadScript } from "@react-google-maps/api";
 
 interface MapProps {
-  itineraries: Location[];
+  itineraries: Location[],
+  zoom: number,
 }
 
-export default function Map({ itineraries }: MapProps) {
+export default function Map({ itineraries, zoom }: MapProps) {
   const { isLoaded, loadError } = useLoadScript({
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!,
   });
@@ -22,7 +23,7 @@ export default function Map({ itineraries }: MapProps) {
   return (
     <GoogleMap
       mapContainerStyle={{ height: "100%", width: "100%" }}
-      zoom={8}
+      zoom={zoom}
       center={center}
     >
       {itineraries.map((location, key) => (
