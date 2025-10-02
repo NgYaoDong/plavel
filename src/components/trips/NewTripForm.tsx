@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { createTrip } from "@/lib/actions/create-trip";
-import { UploadButton } from "@/lib/upload-thing";
+import { UploadDropzone } from "@/lib/upload-thing";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { useState, useTransition } from "react";
@@ -15,7 +15,7 @@ export default function NewTripForm() {
   return (
     <main className="max-w-lg mx-auto mt-10">
       <Card>
-        <CardHeader>New Trip</CardHeader>
+        <CardHeader className="text-3xl font-bold">New Trip</CardHeader>
         <CardContent>
           <form
             className="space-y-6"
@@ -113,7 +113,7 @@ export default function NewTripForm() {
                   style={{ display: "block" }}
                 />
               )}
-              <UploadButton
+              <UploadDropzone
                 endpoint="imageUploader"
                 onClientUploadComplete={(res) => {
                   if (res && res[0].ufsUrl) {
