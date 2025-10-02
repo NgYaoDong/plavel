@@ -34,8 +34,20 @@ export async function addLocation(formData: FormData, tripId: string) {
   if (!address) {
     throw new Error("Address is required");
   }
+  // Try to use precise lat/lng from Places autocomplete if provided
+  const formLat = formData.get("lat")?.toString();
+  const formLng = formData.get("lng")?.toString();
+  let lat: number;
+  let lng: number;
 
-  const { lat, lng } = await geocodeAddress(address);
+  if (formLat && formLng) {
+    lat = parseFloat(formLat);
+    lng = parseFloat(formLng);
+  } else {
+    const coords = await geocodeAddress(address);
+    lat = coords.lat;
+    lng = coords.lng;
+  }
 
   const count = await prisma.location.count({
     where: { tripId },
