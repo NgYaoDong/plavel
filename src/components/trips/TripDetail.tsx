@@ -1,23 +1,42 @@
 "use client";
 
-import { Trip } from "@/generated/prisma";
+import { Location, Trip } from "@/generated/prisma";
 import Image from "next/image";
-import { Calendar, Plus } from "lucide-react";
+import { ArrowLeft, Calendar, MapPin, Plus } from "lucide-react";
 import Link from "next/link";
-import { Button } from "../ui/button";
-import { Tabs, TabsList, TabsTrigger } from "../ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState } from "react";
 import { TabsContent } from "@radix-ui/react-tabs";
+import Map from "@/components/trips/Map";
+
+type TripWithLocation = Trip & {
+  locations: Location[];
+};
 
 interface TripDetailClientProps {
-  trip: Trip;
+  trip: TripWithLocation;
 }
 
+function getTripDays(trip: TripWithLocation) {
+  return Math.ceil(
+    (new Date(trip.endDate).getTime() - new Date(trip.startDate).getTime()) /
+      (1000 * 60 * 60 * 24)
+  );
+}
 export default function TripDetailClient({ trip }: TripDetailClientProps) {
   const [activeTab, setActiveTab] = useState("overview");
 
   return (
     <div className="container mx-auto px-4 py-8 space-y-8">
+      <div className="mt-4 md:mt-0">
+        <Link href={`/trips`}>
+          <Button className="transition-shadow">
+            <ArrowLeft />
+            Back
+          </Button>
+        </Link>
+      </div>
       {trip.imageUrl && (
         <div className="relative w-full h-72 md:h-96 rounded-xl overflow-hidden shadow-lg">
           <Image
@@ -82,7 +101,7 @@ export default function TripDetailClient({ trip }: TripDetailClientProps) {
                 <h2 className="text-2xl font-semibold mb-4">Trip Summary</h2>
                 <div className="space-y-4">
                   <div className="flex items-start">
-                    <Calendar className="h-10 text-gray-500 mt-1 mr-2" />
+                    <Calendar className="h-10 text-gray-500 mt-1 mr-3" />
                     <div>
                       <p className="font-medium text-gray-700">Dates</p>
                       <p className="text-sm text-gray-500">
@@ -97,21 +116,43 @@ export default function TripDetailClient({ trip }: TripDetailClientProps) {
                           month: "long",
                           day: "numeric",
                         })}{" "}
-                        [
-                        {Math.ceil(
-                          (new Date(trip.endDate).getTime() -
-                            new Date(trip.startDate).getTime()) /
-                            (1000 * 60 * 60 * 24)
-                        )}{" "}
-                        day(s)]
+                        ({getTripDays(trip)}{" "}
+                        {getTripDays(trip) === 1 ? "day" : "days"})
                       </p>
                     </div>
                   </div>
 
                   <div className="flex items-start">
-
+                    <MapPin className="h-10 mr-3 text-gray-500" />
+                    <div>
+                      <p className="font-medium text-gray-700">Destinations</p>
+                      <p className="text-sm text-gray-500">
+                        {trip.locations.length}{" "}
+                        {trip.locations.length === 1 ? "location" : "locations"}
+                      </p>
+                    </div>
                   </div>
                 </div>
+              </div>
+              <div className="h-72 rounded-lg overflow-hidden shadow">
+                {trip.locations.length === 0 ? (
+                  <div className="flex h-full items-center justify-center p-4 text-center">
+                    <div>
+                      <p className="text-gray-600">
+                        No locations added yet. Start adding locations to go on your trip!
+                      </p>
+                      <div className="mt-2">
+                        <Link href={`/trips/${trip.id}/itinerary/new`}>
+                          <Button>
+                            <Plus /> Add Location
+                          </Button>
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <Map itineraries={trip.locations} />
+                )}
               </div>
             </div>
           </TabsContent>
