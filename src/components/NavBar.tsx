@@ -75,7 +75,7 @@ export default function NavBar({ session }: { session: Session | null }) {
                 href={"/globe"}
                 className="text-slate-900 hover:text-sky-500"
               >
-                Explore
+                Globe
               </Link>
               <button
                 className="flex items-center justify-center bg-gray-800 text-white px-4 py-2 rounded hover:bg-gray-900 hover:shadow-lg transition cursor-pointer"
@@ -95,14 +95,14 @@ export default function NavBar({ session }: { session: Session | null }) {
                 <GoogleIcon />
                 Sign in
               </button>
-              <button
+              {/* <button
                 className="flex items-center justify-center bg-gray-800 text-white px-4 py-2 rounded hover:bg-gray-900 hover:shadow-lg transition cursor-pointer"
                 onClick={loginWithGitHub}
                 aria-label="Sign in with GitHub"
               >
                 <GitHubIcon />
                 Sign in
-              </button>
+              </button> */}
             </>
           )}
         </div>
