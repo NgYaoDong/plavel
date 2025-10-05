@@ -2,13 +2,14 @@
 
 import { Location, Trip } from "@/generated/prisma";
 import Image from "next/image";
-import { ArrowLeft, Calendar, MapPin, Plus } from "lucide-react";
+import { ArrowLeft, Calendar, Edit2, MapPin, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { TabsContent } from "@radix-ui/react-tabs";
 import Map from "@/components/trips/Map";
+import SortableItinerary from "@/components/trips/SortableItinerary";
 
 type TripWithLocation = Trip & {
   locations: Location[];
@@ -26,16 +27,35 @@ function getTripDays(trip: TripWithLocation) {
 }
 export default function TripDetailClient({ trip }: TripDetailClientProps) {
   const [activeTab, setActiveTab] = useState("overview");
+  const [locations, setLocations] = useState(trip.locations);
+  // Derived ordered locations by 'order' (in case server returns unsorted)
+  const orderedLocations = useMemo(
+    () => [...locations].sort((a, b) => (a.order ?? 0) - (b.order ?? 0)),
+    [locations]
+  );
 
   return (
     <div className="container mx-auto px-4 py-8 space-y-8">
       <div className="mt-4 md:mt-0">
         <Link href={`/trips`}>
           <Button className="transition-shadow">
-            <ArrowLeft />
-            Back
+            <ArrowLeft /> Back
           </Button>
         </Link>
+        <div className="flex float-right items-center">
+          {/* TODO: implement edit trip functionality
+              when clicked, redirects to /trips/[tripId]/edit
+              and allows editing of trip details */}
+          <Button className="transition-shadow bg-sky-600 hover:bg-sky-700 mr-4">
+            <Edit2 /> Edit Trip
+          </Button>
+          {/* TODO: implement delete trip functionality:
+              popup that dbl cfm if user wants to delete trip, before actually deleting it from the db,
+              then redirects back to /trips, otherwise cancel just closes the popup */}
+          <Button className="transition-shadow bg-red-700 hover:bg-red-800">
+            <Trash2 /> Delete Trip
+          </Button>
+        </div>
       </div>
       {trip.imageUrl && (
         <div className="relative w-full h-72 md:h-96 rounded-xl overflow-hidden shadow-lg">
@@ -130,16 +150,24 @@ export default function TripDetailClient({ trip }: TripDetailClientProps) {
                         {trip.locations.length}{" "}
                         {trip.locations.length === 1 ? "location" : "locations"}
                       </p>
+                      <div className="text-sm text-gray-500">
+                        <ul className="text-sm text-gray-500 list-disc ml-5">
+                          {orderedLocations.map((loc) => (
+                            <li key={loc.id}>{loc.locationTitle}</li>
+                          ))}
+                        </ul>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
               <div className="h-72 rounded-lg overflow-hidden shadow">
-                {trip.locations.length === 0 ? (
-                  <div className="flex h-full items-center justify-center p-4 text-center">
+                {orderedLocations.length === 0 ? (
+                  <div className="flex h-full items-center justify-center p-4 text-center border border-dashed border-gray-300 rounded-lg">
                     <div>
                       <p className="text-gray-600">
-                        No locations added yet. Start adding locations to go on your trip!
+                        No locations added yet. Start adding locations to go on
+                        your trip!
                       </p>
                       <div className="mt-2">
                         <Link href={`/trips/${trip.id}/itinerary/new`}>
@@ -151,9 +179,37 @@ export default function TripDetailClient({ trip }: TripDetailClientProps) {
                     </div>
                   </div>
                 ) : (
-                  <Map itineraries={trip.locations} />
+                  <Map itineraries={orderedLocations} zoom={8} />
                 )}
               </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="itinerary" className="space-y-6">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-semibold">Itinerary</h2>
+            </div>
+            {orderedLocations.length === 0 ? (
+              <div className="p-4 text-center text-gray-600 border border-dashed border-gray-300 rounded-lg">
+                No locations added yet. Start adding locations to go on your
+                trip!
+              </div>
+            ) : (
+              <SortableItinerary
+                locations={orderedLocations}
+                tripId={trip.id}
+                onReorder={(newLocs) => setLocations(newLocs)}
+              />
+            )}
+          </TabsContent>
+
+          <TabsContent value="map" className="space-y-6">
+            <div className="h-144 rounded-lg overflow-hidden shadow">
+              {orderedLocations.length === 0 ? (
+                <Map itineraries={[]} zoom={4} />
+              ) : (
+                <Map itineraries={orderedLocations} zoom={10} />
+              )}
             </div>
           </TabsContent>
         </Tabs>
