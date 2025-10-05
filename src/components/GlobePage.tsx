@@ -69,7 +69,7 @@ export default function GlobePage() {
     if (globeLoaded && globeRef.current) {
       try {
         globeRef.current.controls().autoRotate = true;
-        globeRef.current.controls().autoRotateSpeed = 5;
+        globeRef.current.controls().autoRotateSpeed = 2;
       } catch {
         // ignore if methods unavailable
       }
