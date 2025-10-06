@@ -63,7 +63,7 @@ export default function NewLocationClient({ tripId }: { tripId: string }) {
                 }}
                 onPlaceChanged={() => {
                   const place = autocompleteRef.current?.getPlace();
-                  const addr = place?.formatted_address || place?.name || "";
+                  const addr = place?.name || place?.formatted_address || "";
                   setQuery(addr);
                   setPlaceId(place?.place_id || "");
                   const loc = place?.geometry?.location;

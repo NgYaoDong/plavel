@@ -35,8 +35,9 @@ function SortableItem({ item }: { item: Location }) {
     >
       <div>
         <h4 className="font-medium text-gray-800">{item.locationTitle}</h4>
-        {/* TODO: implement address */}
-        {/* <p className="text-sm text-gray-500">{item.address}</p> */}
+        <p className="text-sm text-gray-500">
+          {item.address || `${item.latitude.toFixed(4)}, ${item.longitude.toFixed(4)}`}
+        </p>
       </div>
       <div>
         {/* TODO: implement remove functionality */}

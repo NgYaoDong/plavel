@@ -87,6 +87,7 @@ model Trip {
 model Location {
   id            String @id @default(cuid())
   locationTitle String
+  address       String? // Full formatted address
   latitude      Float
   longitude     Float
   tripId        String

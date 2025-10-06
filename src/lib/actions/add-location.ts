@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 
 async function geocodeAddress(
   address: string
-): Promise<{ lat: number; lng: number }> {
+): Promise<{ lat: number; lng: number; formattedAddress: string }> {
   const apiKey = process.env.GOOGLE_MAPS_API_KEY;
   if (!apiKey) {
     throw new Error("Google Maps API key is not set");
@@ -21,7 +21,8 @@ async function geocodeAddress(
     throw new Error("Failed to geocode address");
   }
   const { lat, lng } = data.results[0].geometry.location;
-  return { lat, lng };
+  const formattedAddress = data.results[0].formatted_address;
+  return { lat, lng, formattedAddress };
 }
 
 export async function addLocation(formData: FormData, tripId: string) {
@@ -39,12 +40,13 @@ export async function addLocation(formData: FormData, tripId: string) {
   const formLng = formData.get("lng")?.toString();
   let lat: number;
   let lng: number;
+  const coords = await geocodeAddress(address);
+  const formattedAddress = coords.formattedAddress;
 
   if (formLat && formLng) {
     lat = parseFloat(formLat);
     lng = parseFloat(formLng);
   } else {
-    const coords = await geocodeAddress(address);
     lat = coords.lat;
     lng = coords.lng;
   }
@@ -56,6 +58,7 @@ export async function addLocation(formData: FormData, tripId: string) {
   await prisma.location.create({
     data: {
       locationTitle: address,
+      address: formattedAddress, // Store the full formatted address
       latitude: lat,
       longitude: lng,
       tripId,
