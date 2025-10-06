@@ -2,7 +2,7 @@
 
 import { Location, Trip } from "@/generated/prisma";
 import Image from "next/image";
-import { ArrowLeft, Calendar, Edit2, MapPin, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Calendar, Edit2, MapPin, Plus } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -10,6 +10,7 @@ import { useMemo, useState } from "react";
 import { TabsContent } from "@radix-ui/react-tabs";
 import Map from "@/components/trips/Map";
 import SortableItinerary from "@/components/trips/SortableItinerary";
+import DeleteTripDialog from "@/components/trips/DeleteTripDialog";
 
 type TripWithLocation = Trip & {
   locations: Location[];
@@ -43,18 +44,12 @@ export default function TripDetailClient({ trip }: TripDetailClientProps) {
           </Button>
         </Link>
         <div className="flex float-right items-center">
-          {/* TODO: implement edit trip functionality
-              when clicked, redirects to /trips/[tripId]/edit
-              and allows editing of trip details */}
-          <Button className="transition-shadow bg-sky-600 hover:bg-sky-700 mr-4">
-            <Edit2 /> Edit Trip
-          </Button>
-          {/* TODO: implement delete trip functionality:
-              popup that dbl cfm if user wants to delete trip, before actually deleting it from the db,
-              then redirects back to /trips, otherwise cancel just closes the popup */}
-          <Button className="transition-shadow bg-red-700 hover:bg-red-800">
-            <Trash2 /> Delete Trip
-          </Button>
+          <Link href={`/trips/${trip.id}/edit`}>
+            <Button className="transition-shadow bg-sky-600 hover:bg-sky-700 mr-4">
+              <Edit2 /> Edit Trip
+            </Button>
+          </Link>
+          <DeleteTripDialog tripId={trip.id} tripTitle={trip.title} />
         </div>
       </div>
       {trip.imageUrl && (
