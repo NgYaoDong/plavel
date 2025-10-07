@@ -66,6 +66,7 @@ interface TripDetailClientProps {
   collaborators: Collaborator[];
   pendingInvites: PendingInvite[];
   payments: PaymentWithRelations[];
+  onRefresh?: () => void | Promise<void>;
 }
 
 function getTripDays(trip: TripWithLocation) {
@@ -82,6 +83,7 @@ export default function TripDetailClient({
   collaborators,
   pendingInvites,
   payments,
+  onRefresh,
 }: TripDetailClientProps) {
   const [activeTab, setActiveTab] = useState("overview");
 
@@ -90,7 +92,8 @@ export default function TripDetailClient({
   const hasCollaborators =
     collaborators.length > 1 || pendingInvites.length > 0;
   // Poll every 10 seconds if shared, don't poll if not shared
-  useTripPolling(trip.id, hasCollaborators ? 10000 : 0);
+  // Use custom refresh function if provided (for CSR), otherwise use router.refresh (for SSR)
+  useTripPolling(trip.id, hasCollaborators ? 10000 : 0, onRefresh);
 
   // Check if user can edit (editor, admin, or owner)
   const canEdit =

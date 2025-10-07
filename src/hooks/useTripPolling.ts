@@ -11,10 +11,21 @@ import { useRouter } from "next/navigation";
  * - Only polls when tab is visible (pauses when tab is inactive)
  * - Automatically cleans up on unmount
  * - Can be disabled by passing 0 as interval
+ * - Supports custom refresh function for client-side rendering
  */
-export function useTripPolling(tripId: string, interval: number = 5000) {
+export function useTripPolling(
+  tripId: string,
+  interval: number = 5000,
+  onRefresh?: () => void | Promise<void>
+) {
   const router = useRouter();
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const refreshFnRef = useRef(onRefresh);
+
+  // Update the ref whenever onRefresh changes
+  useEffect(() => {
+    refreshFnRef.current = onRefresh;
+  }, [onRefresh]);
 
   useEffect(() => {
     // Don't poll if interval is 0 or negative
@@ -24,7 +35,13 @@ export function useTripPolling(tripId: string, interval: number = 5000) {
 
     // Function to refresh the route
     const refreshRoute = () => {
-      router.refresh();
+      if (refreshFnRef.current) {
+        // Use custom refresh function if provided (for CSR)
+        refreshFnRef.current();
+      } else {
+        // Use router.refresh for SSR
+        router.refresh();
+      }
     };
 
     // Function to start polling

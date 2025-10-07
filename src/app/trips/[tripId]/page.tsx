@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
 import TripDetailClient from "@/components/trips/TripDetail";
 import Image from "next/image";
@@ -66,12 +66,14 @@ export default function TripDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchTripData = async () => {
+  const fetchTripData = useCallback(
+    async (showLoading = true) => {
       try {
-        setLoading(true);
+        if (showLoading) {
+          setLoading(true);
+        }
         const response = await fetch(`/api/trips/${tripId}`);
-        
+
         if (!response.ok) {
           if (response.status === 401) {
             setError("unauthorized");
@@ -87,16 +89,27 @@ export default function TripDetail() {
 
         const data = await response.json();
         setTripData(data);
+        setError(null); // Clear any previous errors
       } catch (err) {
         console.error("Error fetching trip:", err);
         setError("unknown");
       } finally {
-        setLoading(false);
+        if (showLoading) {
+          setLoading(false);
+        }
       }
-    };
+    },
+    [tripId]
+  );
 
+  // Wrapper function for polling that doesn't show loading state
+  const refreshData = useCallback(() => {
+    fetchTripData(false);
+  }, [fetchTripData]);
+
+  useEffect(() => {
     fetchTripData();
-  }, [tripId]);
+  }, [fetchTripData]);
 
   // Show loading state while fetching trip data
   if (loading) {
@@ -113,9 +126,7 @@ export default function TripDetail() {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center p-24">
         <h1 className="text-4xl font-bold">Authentication Required</h1>
-        <p className="text-gray-600 mt-4">
-          Please sign in to view this trip.
-        </p>
+        <p className="text-gray-600 mt-4">Please sign in to view this trip.</p>
         <Image src="/crying_penguin.svg" alt="Error" width={400} height={400} />
       </main>
     );
@@ -163,6 +174,7 @@ export default function TripDetail() {
       collaborators={tripData.collaborators}
       pendingInvites={tripData.pendingInvites}
       payments={tripData.payments}
+      onRefresh={refreshData}
     />
   );
 }
