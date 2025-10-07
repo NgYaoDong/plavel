@@ -11,23 +11,43 @@ import { useState, useTransition } from "react";
 export default function NewTripForm() {
   const [isPending, startTransition] = useTransition();
   const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setError(null);
+
+    const formData = new FormData(e.currentTarget);
+    const startDate = formData.get("startDate")?.toString();
+    const endDate = formData.get("endDate")?.toString();
+
+    // Client-side date validation
+    if (startDate && endDate && new Date(endDate) < new Date(startDate)) {
+      setError("End date must be on or after start date");
+      return;
+    }
+
+    if (imageUrl) {
+      formData.append("imageUrl", imageUrl);
+    }
+
+    startTransition(() => {
+      createTrip(formData);
+    });
+  };
 
   return (
     <main className="max-w-lg mx-auto mt-10">
       <Card>
         <CardHeader className="text-3xl font-bold">New Trip</CardHeader>
         <CardContent>
-          <form
-            className="space-y-6"
-            action={(formData: FormData) => {
-              if (imageUrl) {
-                formData.append("imageUrl", imageUrl);
-              }
-              startTransition(() => {
-                createTrip(formData);
-              });
-            }}
-          >
+          <form className="space-y-6" onSubmit={handleSubmit}>
+            {error && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+                {error}
+              </div>
+            )}
+
             <div>
               <label
                 htmlFor="title"

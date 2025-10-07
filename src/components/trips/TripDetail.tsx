@@ -1,6 +1,6 @@
 "use client";
 
-import { Location, Trip } from "@/generated/prisma";
+import { Location, Trip, Accommodation } from "@/generated/prisma";
 import Image from "next/image";
 import { ArrowLeft, Calendar, Edit2, MapPin, Plus } from "lucide-react";
 import Link from "next/link";
@@ -11,9 +11,11 @@ import { TabsContent } from "@radix-ui/react-tabs";
 import Map from "@/components/trips/Map";
 import SortableItinerary from "@/components/trips/SortableItinerary";
 import DeleteTripDialog from "@/components/trips/DeleteTripDialog";
+import AccommodationsList from "@/components/trips/AccommodationsList";
 
 type TripWithLocation = Trip & {
   locations: Location[];
+  accommodations: Accommodation[];
 };
 
 interface TripDetailClientProps {
@@ -28,7 +30,7 @@ function getTripDays(trip: TripWithLocation) {
 }
 export default function TripDetailClient({ trip }: TripDetailClientProps) {
   const [activeTab, setActiveTab] = useState("overview");
-  
+
   // Derived ordered locations by 'order' (in case server returns unsorted)
   const orderedLocations = useMemo(() => {
     return [...trip.locations].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
@@ -86,13 +88,6 @@ export default function TripDetailClient({ trip }: TripDetailClientProps) {
             </span>
           </div>
         </div>
-        <div className="mt-4 md:mt-0">
-          <Link href={`/trips/${trip.id}/itinerary/new`}>
-            <Button>
-              <Plus /> Add Location
-            </Button>
-          </Link>
-        </div>
       </div>
 
       <div className="bg-white p-6 shadow rounded-lg">
@@ -100,6 +95,9 @@ export default function TripDetailClient({ trip }: TripDetailClientProps) {
           <TabsList className="mb-6">
             <TabsTrigger value="overview" className="text-lg">
               Overview
+            </TabsTrigger>
+            <TabsTrigger value="accommodations" className="text-lg">
+              Accommodations
             </TabsTrigger>
             <TabsTrigger value="itinerary" className="text-lg">
               Itinerary
@@ -182,11 +180,25 @@ export default function TripDetailClient({ trip }: TripDetailClientProps) {
           <TabsContent value="itinerary" className="space-y-6">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-2xl font-semibold">Itinerary</h2>
+              <div className="mt-4 md:mt-0">
+                <Link href={`/trips/${trip.id}/itinerary/new`}>
+                  <Button>
+                    <Plus /> Add Location
+                  </Button>
+                </Link>
+              </div>
             </div>
             {orderedLocations.length === 0 ? (
-              <div className="p-4 text-center text-gray-600 border border-dashed border-gray-300 rounded-lg">
+              <div className="p-4 text-center text-gray-600 border border-dashed border-gray-300 rounded-lg py-12">
                 No locations added yet. Start adding locations to go on your
                 trip!
+                <div className="mt-4">
+                  <Link href={`/trips/${trip.id}/itinerary/new`}>
+                    <Button>
+                      <Plus /> Add Location
+                    </Button>
+                  </Link>
+                </div>
               </div>
             ) : (
               <SortableItinerary
@@ -195,6 +207,13 @@ export default function TripDetailClient({ trip }: TripDetailClientProps) {
                 tripDays={getTripDays(trip)}
               />
             )}
+          </TabsContent>
+
+          <TabsContent value="accommodations" className="space-y-6">
+            <AccommodationsList
+              accommodations={trip.accommodations}
+              tripId={trip.id}
+            />
           </TabsContent>
 
           <TabsContent value="map" className="space-y-6">

@@ -1,0 +1,138 @@
+"use client";
+
+import { Accommodation } from "@/generated/prisma";
+import {
+  Building2,
+  Calendar,
+  MapPin,
+  FileText,
+  Link as LinkIcon,
+  Trash2,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { deleteAccommodation } from "@/lib/actions/delete-accommodation";
+import { useState } from "react";
+import EditAccommodationForm from "./EditAccommodationForm";
+
+interface AccommodationCardProps {
+  accommodation: Accommodation;
+  tripId: string;
+}
+
+export default function AccommodationCard({
+  accommodation,
+  tripId,
+}: AccommodationCardProps) {
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    if (!confirm(`Are you sure you want to delete ${accommodation.name}?`)) {
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      await deleteAccommodation(accommodation.id, tripId);
+    } catch (error) {
+      console.error("Failed to delete accommodation:", error);
+      alert("Failed to delete accommodation. Please try again.");
+      setIsDeleting(false);
+    }
+  };
+
+  const formatDate = (date: Date) => {
+    return new Date(date).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  };
+
+  const nights = Math.ceil(
+    (new Date(accommodation.checkOutDate).getTime() -
+      new Date(accommodation.checkInDate).getTime()) /
+      (1000 * 60 * 60 * 24)
+  );
+
+  return (
+    <div className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow bg-white">
+      <div className="flex justify-between items-start mb-3">
+        <div className="flex items-start gap-3">
+          <div className="p-2 bg-blue-100 rounded-lg">
+            <Building2 className="h-5 w-5 text-blue-600" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-lg">{accommodation.name}</h3>
+            {accommodation.address && (
+              <p className="text-sm text-gray-600 flex items-center gap-1 mt-1">
+                <MapPin className="h-3 w-3" />
+                {accommodation.address}
+              </p>
+            )}
+          </div>
+        </div>
+        <div className="flex gap-1">
+          <EditAccommodationForm
+            accommodation={accommodation}
+            tripId={tripId}
+          />
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleDelete}
+            disabled={isDeleting}
+            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+
+      <div className="space-y-2 text-sm">
+        <div className="flex items-center gap-2 text-gray-700">
+          <Calendar className="h-4 w-4" />
+          <span>
+            {formatDate(accommodation.checkInDate)} -{" "}
+            {formatDate(accommodation.checkOutDate)}
+          </span>
+          <span className="text-gray-500">
+            ({nights} night{nights !== 1 ? "s" : ""})
+          </span>
+        </div>
+
+        {accommodation.confirmationNumber && (
+          <div className="flex items-center gap-2 text-gray-700">
+            <FileText className="h-4 w-4" />
+            <span>Confirmation: {accommodation.confirmationNumber}</span>
+          </div>
+        )}
+
+        {accommodation.cost && (
+          <div className="font-medium text-green-600">
+            ${accommodation.cost.toFixed(2)}
+          </div>
+        )}
+
+        {accommodation.bookingLink && (
+          <div className="flex items-center gap-2">
+            <LinkIcon className="h-4 w-4 text-gray-500" />
+            <a
+              href={accommodation.bookingLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:underline text-sm"
+            >
+              View Booking
+            </a>
+          </div>
+        )}
+
+        {accommodation.notes && (
+          <div className="mt-2 pt-2 border-t border-gray-200">
+            <p className="text-gray-600 text-sm">{accommodation.notes}</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

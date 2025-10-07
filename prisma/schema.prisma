@@ -78,7 +78,8 @@ model Trip {
   userId      String
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  locations Location[]
+  locations      Location[]
+  accommodations Accommodation[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -94,6 +95,23 @@ model Location {
   tripId        String
   trip          Trip    @relation(fields: [tripId], references: [id], onDelete: Cascade)
   order         Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Accommodation {
+  id                 String   @id @default(cuid())
+  name               String   // Hotel/Airbnb name
+  address            String?
+  checkInDate        DateTime
+  checkOutDate       DateTime
+  confirmationNumber String?
+  bookingLink        String?
+  cost               Float?
+  notes              String?
+  tripId             String
+  trip               Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
