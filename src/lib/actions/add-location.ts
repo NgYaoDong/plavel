@@ -53,19 +53,29 @@ export async function addLocation(formData: FormData, tripId: string) {
   let duration: number | undefined;
 
   // Parse timezone offset (in minutes, negative for ahead of UTC)
+  // For Singapore: offset = -480 (480 minutes ahead of UTC)
   const timezoneOffset = timezoneOffsetStr ? parseInt(timezoneOffsetStr) : 0;
 
   // Parse and validate times if provided
-  // The datetime-local input sends time without timezone (e.g., "2024-10-08T10:00")
-  // We need to adjust for the user's timezone since the server might be in a different timezone
+  // The datetime-local input sends time in the user's local timezone (e.g., "2024-10-08T10:00")
+  // but new Date() on the server interprets it in the SERVER's timezone
+  // We need to convert: user's local time → UTC
   if (startTimeStr) {
-    const localDate = new Date(startTimeStr);
-    // Adjust for timezone: subtract the offset to get the correct UTC time
-    startTime = new Date(localDate.getTime() - timezoneOffset * 60 * 1000);
+    // Create date treating the input as UTC (to avoid server timezone interpretation)F
+    const parts = startTimeStr.split('T');
+    const datePart = parts[0];
+    const timePart = parts[1] || '00:00';
+    startTime = new Date(`${datePart}T${timePart}:00Z`); // Parse as UTC
+    // Now adjust for user's timezone: add the offset back
+    // If user is GMT+8 (offset=-480), we subtract 8 hours to get UTC
+    startTime = new Date(startTime.getTime() + timezoneOffset * 60 * 1000);
   }
   if (endTimeStr) {
-    const localDate = new Date(endTimeStr);
-    endTime = new Date(localDate.getTime() - timezoneOffset * 60 * 1000);
+    const parts = endTimeStr.split('T');
+    const datePart = parts[0];
+    const timePart = parts[1] || '00:00';
+    endTime = new Date(`${datePart}T${timePart}:00Z`);
+    endTime = new Date(endTime.getTime() + timezoneOffset * 60 * 1000);
   }
 
   // Validate time order if both are provided
