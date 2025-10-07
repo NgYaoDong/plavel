@@ -85,14 +85,15 @@ model Trip {
 }
 
 model Location {
-  id            String @id @default(cuid())
+  id            String  @id @default(cuid())
   locationTitle String
   address       String? // Full formatted address
   latitude      Float
   longitude     Float
+  day           Int     @default(1) // Which day of the trip this location belongs to
   tripId        String
-  trip          Trip   @relation(fields: [tripId], references: [id], onDelete: Cascade)
-  order         Int    @default(0)
+  trip          Trip    @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  order         Int     @default(0)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

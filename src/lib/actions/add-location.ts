@@ -51,9 +51,39 @@ export async function addLocation(formData: FormData, tripId: string) {
     lng = coords.lng;
   }
 
-  const count = await prisma.location.count({
-    where: { tripId },
+  // Get trip to determine which day to assign (default to day 1)
+  const trip = await prisma.trip.findUnique({
+    where: { id: tripId },
+    include: { locations: true },
   });
+
+  // Calculate which day to assign based on existing locations
+  // Default to day 1, or distribute evenly across trip days
+  let assignedDay = 1;
+  let orderInDay = 0;
+
+  if (trip) {
+    const tripDuration = Math.ceil(
+      (new Date(trip.endDate).getTime() - new Date(trip.startDate).getTime()) /
+        (1000 * 60 * 60 * 24)
+    );
+
+    // Count locations per day
+    const locationCounts = Array.from({ length: tripDuration }, (_, i) => {
+      const day = i + 1;
+      return {
+        day,
+        count: trip.locations.filter((loc) => loc.day === day).length,
+      };
+    });
+
+    // Assign to the day with the fewest locations
+    const targetDay = locationCounts.reduce((prev, curr) =>
+      curr.count < prev.count ? curr : prev
+    );
+    assignedDay = targetDay.day;
+    orderInDay = targetDay.count; // Order within the day (0-indexed)
+  }
 
   await prisma.location.create({
     data: {
@@ -62,7 +92,8 @@ export async function addLocation(formData: FormData, tripId: string) {
       latitude: lat,
       longitude: lng,
       tripId,
-      order: count,
+      order: orderInDay, // Order within the specific day
+      day: assignedDay, // Auto-assign to a day
     },
   });
 

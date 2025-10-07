@@ -1,5 +1,16 @@
 import { Location } from "@/generated/prisma";
-import { DndContext, closestCenter, DragEndEvent } from "@dnd-kit/core";
+import {
+  DndContext,
+  DragEndEvent,
+  DragStartEvent,
+  DragOverlay,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragOverEvent,
+  rectIntersection,
+  useDroppable,
+} from "@dnd-kit/core";
 import {
   arrayMove,
   SortableContext,
@@ -7,96 +18,361 @@ import {
   useSortable,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { useEffect, useId, useState } from "react";
-import { Button } from "../ui/button";
+import { useId, useState, memo, useEffect } from "react";
 import { reorderItinerary } from "@/lib/actions/reorder-itinerary";
+import { updateLocationDay } from "@/lib/actions/update-location-day";
+import RemoveLocationDialog from "./RemoveLocationDialog";
+import { GripVertical } from "lucide-react";
 
 interface SortableItineraryProps {
   locations: Location[];
   tripId: string;
-  onReorder?: (newLocations: Location[]) => void;
+  tripDays: number;
 }
 
-// TODO: implement things like Day 1, Day 2 based on the number of days in the trip, and allow users to drag the locations between days
+function DroppableDay({
+  day,
+  children,
+}: {
+  day: number;
+  children: React.ReactNode;
+}) {
+  const { setNodeRef, isOver } = useDroppable({
+    id: `day-${day}`,
+  });
 
-function SortableItem({ item }: { item: Location }) {
-  const { attributes, listeners, setNodeRef, transform, transition } =
-    useSortable({ id: item.id });
   return (
     <div
       ref={setNodeRef}
-      {...attributes}
-      {...listeners}
-      style={{
-        transform: CSS.Transform.toString(transform),
-        transition: transition,
-      }}
-      className="p-4 bg-white border border-gray-200 rounded-lg shadow-sm cursor-move hover:shadow-md transition flex items-center justify-between"
+      className={`space-y-3 min-h-[100px] rounded-lg p-3 transition-colors ${
+        isOver ? "bg-blue-50 border-2 border-blue-300 border-dashed" : ""
+      }`}
     >
-      <div>
+      {children}
+    </div>
+  );
+}
+
+function SortableItem({
+  item,
+  tripId,
+  onRemove,
+}: {
+  item: Location;
+  tripId: string;
+  onRemove?: () => void;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: item.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="p-4 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition flex items-center gap-3"
+    >
+      {/* Drag Handle */}
+      <div
+        {...attributes}
+        {...listeners}
+        className="cursor-move text-gray-400 hover:text-gray-600 flex-shrink-0"
+      >
+        <GripVertical className="h-5 w-5" />
+      </div>
+
+      {/* Location Info */}
+      <div className="flex-1">
         <h4 className="font-medium text-gray-800">{item.locationTitle}</h4>
         <p className="text-sm text-gray-500">
-          {item.address || `${item.latitude.toFixed(4)}, ${item.longitude.toFixed(4)}`}
+          {item.address ||
+            `${item.latitude.toFixed(4)}, ${item.longitude.toFixed(4)}`}
         </p>
       </div>
-      <div>
-        {/* TODO: implement remove functionality */}
-        <Button className="text-sm bg-red-700 hover:bg-red-800">Remove</Button>
+
+      {/* Remove Button */}
+      <div className="flex-shrink-0">
+        <RemoveLocationDialog
+          locationId={item.id}
+          locationTitle={item.locationTitle}
+          tripId={tripId}
+          onRemove={onRemove}
+        />
       </div>
     </div>
   );
 }
 
-export default function SortableItinerary({
+function SortableItinerary({
   locations,
   tripId,
-  onReorder,
+  tripDays,
 }: SortableItineraryProps) {
   const id = useId();
-  const [localLocation, setLocalLocation] = useState(locations);
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const [optimisticLocations, setOptimisticLocations] = useState(locations);
 
-  // Keep local state in sync if parent updates locations
+  // Sync optimistic state with props when locations change from server
   useEffect(() => {
-    setLocalLocation(locations);
+    setOptimisticLocations(locations);
   }, [locations]);
+
+  // Configure sensors for better drag detection
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    })
+  );
+
+  // Group locations by day - use optimistic state for immediate UI updates
+  const locationsByDay = Array.from({ length: tripDays }, (_, i) => {
+    const day = i + 1;
+    const dayLocs = optimisticLocations
+      .filter((loc) => (loc.day || 1) === day)
+      .sort((a, b) => (a.order ?? 0) - (b.order ?? 0)); // Sort by order within day
+    return {
+      day,
+      locations: dayLocs,
+      itemIds: dayLocs.map((loc) => loc.id),
+    };
+  });
+
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveId(event.active.id as string);
+  };
+
+  const handleDragOver = (event: DragOverEvent) => {
+    const { active, over } = event;
+    if (!over) return;
+
+    const activeId = active.id as string;
+    const overId = over.id as string;
+
+    // Check if we're dragging over a day container
+    if (overId.startsWith("day-")) {
+      const targetDay = parseInt(overId.split("-")[1]);
+      const activeLocation = locations.find((loc) => loc.id === activeId);
+
+      if (activeLocation && (activeLocation.day || 1) !== targetDay) {
+        // Optimistically update on drop, not during drag
+        // This prevents constant state updates during dragging
+      }
+    }
+  };
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
-    if (active.id !== over?.id) {
-      const oldIndex = localLocation.findIndex((item) => item.id === active.id);
-      const newIndex = localLocation.findIndex((item) => item.id === over!.id);
-      const newItems = arrayMove(localLocation, oldIndex, newIndex).map(
-        (item, index) => ({
-          ...item,
-          order: index, // Update order based on new position
-        })
+    setActiveId(null);
+
+    if (!over) {
+      return;
+    }
+
+    const activeId = active.id as string;
+    const overId = over.id as string;
+
+    const activeLocation = optimisticLocations.find(
+      (loc) => loc.id === activeId
+    );
+
+    if (!activeLocation) {
+      return;
+    }
+
+    // If dropped on a day container, update the location's day
+    if (overId.startsWith("day-")) {
+      const targetDay = parseInt(overId.split("-")[1]);
+      const currentDay = activeLocation.day || 1;
+
+      if (currentDay !== targetDay) {
+        // Optimistically update UI immediately
+        const locationsInTargetDay = optimisticLocations.filter(
+          (loc) => loc.day === targetDay
+        ).length;
+
+        setOptimisticLocations((prev) =>
+          prev.map((loc) =>
+            loc.id === activeId
+              ? { ...loc, day: targetDay, order: locationsInTargetDay }
+              : loc
+          )
+        );
+
+        // Update server in background
+        updateLocationDay(activeId, targetDay, tripId);
+      }
+      return;
+    }
+
+    // If dropped on another location (reordering within day)
+    const overLocation = optimisticLocations.find((loc) => loc.id === overId);
+    const activeDay = activeLocation.day || 1;
+    const overDay = overLocation?.day || 1;
+
+    // If dropped on a location in a DIFFERENT day, move to that day
+    if (overLocation && activeDay !== overDay) {
+      // Optimistically update UI immediately
+      const locationsInTargetDay = optimisticLocations.filter(
+        (loc) => loc.day === overDay
+      ).length;
+
+      setOptimisticLocations((prev) =>
+        prev.map((loc) =>
+          loc.id === activeId
+            ? { ...loc, day: overDay, order: locationsInTargetDay }
+            : loc
+        )
       );
-      setLocalLocation(newItems);
-      onReorder?.(newItems);
-      await reorderItinerary(
+
+      // Update server in background
+      updateLocationDay(activeId, overDay, tripId);
+      return;
+    }
+
+    // If dropped on a location in the SAME day, reorder within the day
+    if (overLocation && activeDay === overDay) {
+      const dayLocations = optimisticLocations.filter(
+        (loc) => (loc.day || 1) === activeDay
+      );
+      const oldIndex = dayLocations.findIndex((loc) => loc.id === activeId);
+      const newIndex = dayLocations.findIndex((loc) => loc.id === overId);
+
+      const reordered = arrayMove(dayLocations, oldIndex, newIndex);
+      const otherLocations = optimisticLocations.filter(
+        (loc) => (loc.day || 1) !== activeDay
+      );
+
+      // Update order within the day (0-indexed per day)
+      const reorderedWithOrder = reordered.map((item, index) => ({
+        ...item,
+        order: index,
+      }));
+
+      const newItems = [...otherLocations, ...reorderedWithOrder];
+
+      // Optimistically update UI immediately
+      setOptimisticLocations(newItems);
+
+      // Update server in background
+      reorderItinerary(
         tripId,
         newItems.map((item) => item.id)
       );
     }
   };
 
+  const activeLocation = locations.find((loc) => loc.id === activeId);
+
   return (
-    // TODO: make the dragging smoother by adding some animation or easing (right now the boxes keep jumping when i drag them)
     <DndContext
       id={id}
-      collisionDetection={closestCenter}
+      sensors={sensors}
+      collisionDetection={rectIntersection}
+      onDragStart={handleDragStart}
+      onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
     >
-      <SortableContext
-        strategy={verticalListSortingStrategy}
-        items={localLocation.map((loc) => loc.id)}
-      >
-        <div className="space-y-4">
-          {localLocation.map((location, key) => (
-            <SortableItem key={key} item={location} />
-          ))}
-        </div>
-      </SortableContext>
+      <div className="space-y-6">
+        {locationsByDay.map(({ day, locations: dayLocations, itemIds }) => (
+          <div
+            key={day}
+            className="bg-gray-50 rounded-xl p-4 border border-gray-200"
+          >
+            {/* Day Header */}
+            <div className="flex items-center gap-2 mb-4">
+              <div className="bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-semibold">
+                Day {day}
+              </div>
+              <div className="text-sm text-gray-500">
+                {dayLocations.length}{" "}
+                {dayLocations.length === 1 ? "location" : "locations"}
+              </div>
+            </div>
+
+            {/* Drop Zone */}
+            <SortableContext
+              id={`sortable-day-${day}`}
+              strategy={verticalListSortingStrategy}
+              items={itemIds}
+            >
+              <DroppableDay day={day}>
+                {dayLocations.length === 0 ? (
+                  <div className="text-center py-8 text-gray-400 text-sm">
+                    Drop locations here or add new ones
+                  </div>
+                ) : (
+                  dayLocations.map((location) => (
+                    <SortableItem
+                      key={location.id}
+                      item={location}
+                      tripId={tripId}
+                      onRemove={() => {
+                        // onRemove is handled by the dialog component
+                        // No local state update needed - server action will trigger re-fetch
+                      }}
+                    />
+                  ))
+                )}
+              </DroppableDay>
+            </SortableContext>
+          </div>
+        ))}
+      </div>
+
+      {/* Drag Overlay */}
+      <DragOverlay>
+        {activeLocation ? (
+          <div className="p-4 bg-white border-2 border-blue-500 rounded-lg shadow-xl flex items-center gap-3 opacity-90">
+            <GripVertical className="h-5 w-5 text-gray-400" />
+            <div className="flex-1">
+              <h4 className="font-medium text-gray-800">
+                {activeLocation.locationTitle}
+              </h4>
+              <p className="text-sm text-gray-500">
+                {activeLocation.address ||
+                  `${activeLocation.latitude.toFixed(
+                    4
+                  )}, ${activeLocation.longitude.toFixed(4)}`}
+              </p>
+            </div>
+          </div>
+        ) : null}
+      </DragOverlay>
     </DndContext>
   );
 }
+
+// Wrap in memo to prevent unnecessary re-renders
+export default memo(SortableItinerary, (prevProps, nextProps) => {
+  // Custom comparison: only re-render if the actual location data changes
+  const prevSerialized = JSON.stringify(
+    prevProps.locations.map((l) => ({
+      id: l.id,
+      order: l.order,
+      day: l.day,
+      locationTitle: l.locationTitle,
+    }))
+  );
+  const nextSerialized = JSON.stringify(
+    nextProps.locations.map((l) => ({
+      id: l.id,
+      order: l.order,
+      day: l.day,
+      locationTitle: l.locationTitle,
+    }))
+  );
+  return prevSerialized === nextSerialized;
+});

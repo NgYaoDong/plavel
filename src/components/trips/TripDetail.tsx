@@ -28,12 +28,11 @@ function getTripDays(trip: TripWithLocation) {
 }
 export default function TripDetailClient({ trip }: TripDetailClientProps) {
   const [activeTab, setActiveTab] = useState("overview");
-  const [locations, setLocations] = useState(trip.locations);
+  
   // Derived ordered locations by 'order' (in case server returns unsorted)
-  const orderedLocations = useMemo(
-    () => [...locations].sort((a, b) => (a.order ?? 0) - (b.order ?? 0)),
-    [locations]
-  );
+  const orderedLocations = useMemo(() => {
+    return [...trip.locations].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+  }, [trip.locations]);
 
   return (
     <div className="container mx-auto px-4 py-8 space-y-8">
@@ -193,7 +192,7 @@ export default function TripDetailClient({ trip }: TripDetailClientProps) {
               <SortableItinerary
                 locations={orderedLocations}
                 tripId={trip.id}
-                onReorder={(newLocs) => setLocations(newLocs)}
+                tripDays={getTripDays(trip)}
               />
             )}
           </TabsContent>

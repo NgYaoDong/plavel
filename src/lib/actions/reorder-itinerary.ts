@@ -9,17 +9,43 @@ export async function reorderItinerary(tripId: string, newOrder: string[]) {
     throw new Error("Not authenticated");
   }
 
-  await prisma.$transaction(
-    newOrder.map((locationId: string, index: number) =>
-      prisma.location.updateMany({
-        where: {
-          id: locationId,
-          tripId: tripId,
-        },
-        data: {
-          order: index,
-        },
-      })
-    )
+  // Get all locations with their days
+  const locations = await prisma.location.findMany({
+    where: { tripId },
+    select: { id: true, day: true },
+  });
+
+  // Create a map of locationId -> day
+  const locationDayMap = new Map(
+    locations.map((loc) => [loc.id, loc.day])
   );
+
+  // Group newOrder by day and assign order within each day
+  const updatesByDay = new Map<number, string[]>();
+  
+  for (const locationId of newOrder) {
+    const day = locationDayMap.get(locationId) ?? 1;
+    if (!updatesByDay.has(day)) {
+      updatesByDay.set(day, []);
+    }
+    updatesByDay.get(day)!.push(locationId);
+  }
+
+  // Create update operations for each location with order within its day
+  const updates = Array.from(updatesByDay.values()).flatMap(
+    (locationIds) =>
+      locationIds.map((locationId, orderInDay) =>
+        prisma.location.updateMany({
+          where: {
+            id: locationId,
+            tripId: tripId,
+          },
+          data: {
+            order: orderInDay, // Order within the day
+          },
+        })
+      )
+  );
+
+  await prisma.$transaction(updates);
 }
