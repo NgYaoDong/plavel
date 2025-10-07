@@ -3,12 +3,23 @@
 import { useRef, useState, useTransition } from "react";
 import { Button } from "../ui/button";
 import { addLocation } from "@/lib/actions/add-location";
-import { Autocomplete, GoogleMap, Marker, useLoadScript } from "@react-google-maps/api";
-import { MapPin, Loader2, ArrowLeft, Calendar } from "lucide-react";
+import {
+  Autocomplete,
+  GoogleMap,
+  Marker,
+  useLoadScript,
+} from "@react-google-maps/api";
+import { MapPin, Loader2, ArrowLeft, Calendar, FileText } from "lucide-react";
 import TimeSlotPicker from "./TimeSlotPicker";
 import { useRouter } from "next/navigation";
 
-export default function NewLocationClient({ tripId, tripDays }: { tripId: string; tripDays: number }) {
+export default function NewLocationClient({
+  tripId,
+  tripDays,
+}: {
+  tripId: string;
+  tripDays: number;
+}) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [query, setQuery] = useState("");
@@ -61,7 +72,8 @@ export default function NewLocationClient({ tripId, tripDays }: { tripId: string
             Add New Location
           </h1>
           <p className="text-center text-gray-500 mb-6">
-            Search for a place using Google suggestions, then add it to your trip.
+            Search for a place using Google suggestions, then add it to your
+            trip.
           </p>
           <form
             className="space-y-6"
@@ -113,7 +125,8 @@ export default function NewLocationClient({ tripId, tripDays }: { tripId: string
                 </div>
               </Autocomplete>
               <p className="text-xs text-gray-500 mt-2">
-                Tip: Select a suggestion to use the exact coordinates from Google.
+                Tip: Select a suggestion to use the exact coordinates from
+                Google.
               </p>
               {/* Hidden fields with selected place details, used to skip server geocoding when available */}
               <input type="hidden" name="lat" value={lat} />
@@ -139,7 +152,9 @@ export default function NewLocationClient({ tripId, tripDays }: { tripId: string
                 onChange={(e) => setSelectedDay(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
-                <option value="">Auto-assign to day with fewest locations</option>
+                <option value="">
+                  Auto-assign to day with fewest locations
+                </option>
                 {Array.from({ length: tripDays }, (_, i) => (
                   <option key={i + 1} value={i + 1}>
                     Day {i + 1}
@@ -147,7 +162,8 @@ export default function NewLocationClient({ tripId, tripDays }: { tripId: string
                 ))}
               </select>
               <p className="text-xs text-gray-500 mt-2">
-                Leave blank to automatically distribute locations evenly across days.
+                Leave blank to automatically distribute locations evenly across
+                days.
               </p>
             </div>
 
@@ -159,17 +175,47 @@ export default function NewLocationClient({ tripId, tripDays }: { tripId: string
               onEndTimeChange={setEndTime}
             />
 
+            {/* Notes */}
+            <div>
+              <label
+                htmlFor="notes"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
+                <div className="flex items-center gap-1">
+                  <FileText className="h-4 w-4" />
+                  <span>Notes (Optional)</span>
+                </div>
+              </label>
+              <textarea
+                id="notes"
+                name="notes"
+                rows={4}
+                placeholder="Add notes about this location (e.g., activities to do, tips, reservations, etc.)"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+              />
+              <p className="text-xs text-gray-500 mt-2">
+                Add any helpful information or reminders about this location.
+              </p>
+            </div>
+
             {lat && lng && (
               <div>
-                <div className="text-sm font-medium text-gray-700 mb-2">Preview</div>
+                <div className="text-sm font-medium text-gray-700 mb-2">
+                  Preview
+                </div>
                 <div className="h-64 w-full rounded-lg overflow-hidden border border-gray-200">
                   <GoogleMap
                     mapContainerStyle={{ height: "100%", width: "100%" }}
                     center={{ lat: parseFloat(lat), lng: parseFloat(lng) }}
                     zoom={15}
-                    options={{ streetViewControl: false, mapTypeControl: false }}
+                    options={{
+                      streetViewControl: false,
+                      mapTypeControl: false,
+                    }}
                   >
-                    <Marker position={{ lat: parseFloat(lat), lng: parseFloat(lng) }} />
+                    <Marker
+                      position={{ lat: parseFloat(lat), lng: parseFloat(lng) }}
+                    />
                   </GoogleMap>
                 </div>
               </div>

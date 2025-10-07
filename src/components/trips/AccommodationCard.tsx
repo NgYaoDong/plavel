@@ -7,6 +7,7 @@ import {
   MapPin,
   FileText,
   Link as LinkIcon,
+  ExternalLink,
 } from "lucide-react";
 import EditAccommodationForm from "./EditAccommodationForm";
 import DeleteAccommodationDialog from "./DeleteAccommodationDialog";
@@ -44,10 +45,18 @@ export default function AccommodationCard({
           <div>
             <h3 className="font-semibold text-lg">{accommodation.name}</h3>
             {accommodation.address && (
-              <p className="text-sm text-gray-600 flex items-center gap-1 mt-1">
+              <a
+                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                  accommodation.address
+                )}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1 mt-1"
+              >
                 <MapPin className="h-3 w-3" />
                 {accommodation.address}
-              </p>
+                <ExternalLink className="h-3 w-3" />
+              </a>
             )}
           </div>
         </div>

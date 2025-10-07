@@ -1,7 +1,16 @@
 "use client";
 
 import { Flight } from "@/generated/prisma";
-import { Plane, Calendar, Clock, MapPin, CreditCard, Tag, StickyNote } from "lucide-react";
+import {
+  Plane,
+  Calendar,
+  Clock,
+  MapPin,
+  CreditCard,
+  Tag,
+  StickyNote,
+  ExternalLink,
+} from "lucide-react";
 import EditFlightForm from "./EditFlightForm";
 import DeleteFlightDialog from "./DeleteFlightDialog";
 
@@ -37,7 +46,17 @@ export default function FlightCard({ flight, tripId }: FlightCardProps) {
           <Plane className="h-5 w-5 text-blue-600" />
           <div>
             <h3 className="font-semibold text-lg">{flight.airline}</h3>
-            <p className="text-sm text-gray-500">Flight {flight.flightNumber}</p>
+            <a
+              href={`https://www.google.com/search?q=${encodeURIComponent(
+                `${flight.airline} ${flight.flightNumber} flight status`
+              )}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm text-blue-600 hover:text-blue-800 hover:underline inline-flex items-center gap-1"
+            >
+              Flight {flight.flightNumber}
+              <ExternalLink className="h-3 w-3" />
+            </a>
           </div>
         </div>
         <div className="flex gap-1">
@@ -56,17 +75,21 @@ export default function FlightCard({ flight, tripId }: FlightCardProps) {
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-1">
             <MapPin className="h-4 w-4 text-gray-400" />
-            <span className="text-sm font-medium">{flight.departureAirport}</span>
+            <span className="text-sm font-medium">
+              {flight.departureAirport}
+            </span>
           </div>
           <div className="flex items-center gap-2 text-xs text-gray-500">
             <Calendar className="h-3 w-3" />
             <span>{formatDateTime(flight.departureTime)}</span>
           </div>
         </div>
-        
+
         <div className="flex flex-col items-center">
           <Plane className="h-4 w-4 text-gray-400 rotate-90" />
-          <span className="text-xs text-gray-500 mt-1">{calculateDuration()}</span>
+          <span className="text-xs text-gray-500 mt-1">
+            {calculateDuration()}
+          </span>
         </div>
 
         <div className="flex-1 text-right">
@@ -103,7 +126,9 @@ export default function FlightCard({ flight, tripId }: FlightCardProps) {
           <div className="flex items-center gap-2 text-sm">
             <CreditCard className="h-4 w-4 text-gray-400" />
             <span className="text-gray-600">Cost:</span>
-            <span className="font-medium text-green-600">${flight.cost.toFixed(2)}</span>
+            <span className="font-medium text-green-600">
+              ${flight.cost.toFixed(2)}
+            </span>
           </div>
         )}
 

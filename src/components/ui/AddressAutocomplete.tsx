@@ -83,7 +83,7 @@ export default function AddressAutocomplete({
       onPlaceChanged={handlePlaceChanged}
       options={{
         fields: ["formatted_address", "name", "geometry"],
-        types: ["establishment","geocode"],
+        types: ["establishment", "geocode"],
       }}
     >
       <div className="relative">

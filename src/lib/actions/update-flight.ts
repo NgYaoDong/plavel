@@ -35,7 +35,14 @@ export async function updateFlight(
   const seatNumber = formData.get("seatNumber")?.toString();
   const notes = formData.get("notes")?.toString();
 
-  if (!airline || !flightNumber || !departureAirport || !arrivalAirport || !departureTime || !arrivalTime) {
+  if (
+    !airline ||
+    !flightNumber ||
+    !departureAirport ||
+    !arrivalAirport ||
+    !departureTime ||
+    !arrivalTime
+  ) {
     throw new Error("Airline, flight number, airports, and times are required");
   }
 

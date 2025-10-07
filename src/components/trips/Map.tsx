@@ -4,8 +4,8 @@ import { Location } from "@/generated/prisma";
 import { GoogleMap, Marker, useLoadScript } from "@react-google-maps/api";
 
 interface MapProps {
-  itineraries: Location[],
-  zoom: number,
+  itineraries: Location[];
+  zoom: number;
 }
 
 export default function Map({ itineraries, zoom }: MapProps) {

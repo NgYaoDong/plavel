@@ -31,20 +31,20 @@ export default function EditTripForm({ trip }: { trip: Trip }) {
           >
             <div>
               <label
-              htmlFor="title"
-              className="block text-sm font-medium text-gray-700 mb-1"
+                htmlFor="title"
+                className="block text-sm font-medium text-gray-700 mb-1"
               >
-              Title<span className="text-red-500 px-0.5">*</span>
+                Title<span className="text-red-500 px-0.5">*</span>
               </label>
               <input
-              type="text"
-              name="title"
-              defaultValue={trip.title}
-              className={cn(
-                "w-full border border-gray-300 rounded-md px-3 py-2",
-                "focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent"
-              )}
-              required
+                type="text"
+                name="title"
+                defaultValue={trip.title}
+                className={cn(
+                  "w-full border border-gray-300 rounded-md px-3 py-2",
+                  "focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent"
+                )}
+                required
               />
             </div>
 
@@ -77,7 +77,9 @@ export default function EditTripForm({ trip }: { trip: Trip }) {
                 <input
                   type="date"
                   name="startDate"
-                  defaultValue={new Date(trip.startDate).toISOString().split("T")[0]}
+                  defaultValue={
+                    new Date(trip.startDate).toISOString().split("T")[0]
+                  }
                   className={cn(
                     "w-full border border-gray-300 rounded-md px-3 py-2",
                     "focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent"
@@ -95,7 +97,9 @@ export default function EditTripForm({ trip }: { trip: Trip }) {
                 <input
                   type="date"
                   name="endDate"
-                  defaultValue={new Date(trip.endDate).toISOString().split("T")[0]}
+                  defaultValue={
+                    new Date(trip.endDate).toISOString().split("T")[0]
+                  }
                   className={cn(
                     "w-full border border-gray-300 rounded-md px-3 py-2",
                     "focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent"

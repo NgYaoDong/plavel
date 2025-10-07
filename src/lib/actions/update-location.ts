@@ -4,7 +4,11 @@ import { auth } from "@/auth";
 import { prisma } from "../prisma";
 import { revalidatePath } from "next/cache";
 
-export async function updateLocation(formData: FormData, locationId: string, tripId: string) {
+export async function updateLocation(
+  formData: FormData,
+  locationId: string,
+  tripId: string
+) {
   const session = await auth();
   if (!session || !session.user || !session.user.id) {
     throw new Error("Not authenticated");
@@ -28,7 +32,7 @@ export async function updateLocation(formData: FormData, locationId: string, tri
   // Get optional time fields
   const startTimeStr = formData.get("startTime")?.toString();
   const endTimeStr = formData.get("endTime")?.toString();
-  
+
   let startTime: Date | null = null;
   let endTime: Date | null = null;
   let duration: number | null = null;
@@ -48,8 +52,13 @@ export async function updateLocation(formData: FormData, locationId: string, tri
 
   // Calculate duration in minutes if both times are provided
   if (startTime && endTime) {
-    duration = Math.round((endTime.getTime() - startTime.getTime()) / (1000 * 60));
+    duration = Math.round(
+      (endTime.getTime() - startTime.getTime()) / (1000 * 60)
+    );
   }
+
+  // Get optional notes field
+  const notes = formData.get("notes")?.toString() || null;
 
   // Update the location
   await prisma.location.update({
@@ -59,6 +68,7 @@ export async function updateLocation(formData: FormData, locationId: string, tri
       startTime,
       endTime,
       duration,
+      notes,
     },
   });
 

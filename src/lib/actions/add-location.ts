@@ -39,7 +39,7 @@ export async function addLocation(formData: FormData, tripId: string) {
   // Get optional time fields
   const startTimeStr = formData.get("startTime")?.toString();
   const endTimeStr = formData.get("endTime")?.toString();
-  
+
   let startTime: Date | undefined;
   let endTime: Date | undefined;
   let duration: number | undefined;
@@ -59,8 +59,13 @@ export async function addLocation(formData: FormData, tripId: string) {
 
   // Calculate duration in minutes if both times are provided
   if (startTime && endTime) {
-    duration = Math.round((endTime.getTime() - startTime.getTime()) / (1000 * 60));
+    duration = Math.round(
+      (endTime.getTime() - startTime.getTime()) / (1000 * 60)
+    );
   }
+
+  // Get optional notes field
+  const notes = formData.get("notes")?.toString() || null;
 
   // Try to use precise lat/lng from Places autocomplete if provided
   const formLat = formData.get("lat")?.toString();
@@ -86,7 +91,7 @@ export async function addLocation(formData: FormData, tripId: string) {
 
   // Check if user specified a day
   const userSelectedDay = formData.get("day")?.toString();
-  
+
   // Calculate which day to assign based on existing locations
   // Default to day 1, or distribute evenly across trip days
   let assignedDay = 1;
@@ -103,7 +108,9 @@ export async function addLocation(formData: FormData, tripId: string) {
       const selectedDayNum = parseInt(userSelectedDay);
       if (selectedDayNum >= 1 && selectedDayNum <= tripDuration) {
         assignedDay = selectedDayNum;
-        orderInDay = trip.locations.filter((loc) => loc.day === selectedDayNum).length;
+        orderInDay = trip.locations.filter(
+          (loc) => loc.day === selectedDayNum
+        ).length;
       }
     } else {
       // Auto-assign to the day with the fewest locations
@@ -135,6 +142,7 @@ export async function addLocation(formData: FormData, tripId: string) {
       startTime,
       endTime,
       duration,
+      notes,
     },
   });
 

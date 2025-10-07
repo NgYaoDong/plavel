@@ -64,8 +64,10 @@ export default function DeleteFlightDialog({
             </h2>
             <p className="text-gray-600 mb-6">
               Are you sure you want to delete flight{" "}
-              <strong>{airline} {flightNumber}</strong>? This action cannot be
-              undone.
+              <strong>
+                {airline} {flightNumber}
+              </strong>
+              ? This action cannot be undone.
             </p>
 
             <div className="flex gap-3 justify-end">

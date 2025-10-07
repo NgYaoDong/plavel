@@ -11,7 +11,10 @@ interface EditFlightFormProps {
   tripId: string;
 }
 
-export default function EditFlightForm({ flight, tripId }: EditFlightFormProps) {
+export default function EditFlightForm({
+  flight,
+  tripId,
+}: EditFlightFormProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);

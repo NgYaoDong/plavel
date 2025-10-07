@@ -118,7 +118,8 @@ export default function TimeSlotPicker({
         <div className="flex items-center gap-2 text-sm text-gray-600 bg-blue-50 px-3 py-2 rounded-lg">
           <Clock className="h-4 w-4 text-blue-600" />
           <span>
-            Duration: <span className="font-medium text-blue-700">{duration}</span>
+            Duration:{" "}
+            <span className="font-medium text-blue-700">{duration}</span>
           </span>
         </div>
       )}
@@ -133,8 +134,8 @@ export default function TimeSlotPicker({
       {/* Helper Text */}
       {!startTime && !endTime && (
         <p className="text-xs text-gray-500">
-          Add time slots to plan when you&apos;ll visit this location. Both times are
-          optional.
+          Add time slots to plan when you&apos;ll visit this location. Both
+          times are optional.
         </p>
       )}
     </div>

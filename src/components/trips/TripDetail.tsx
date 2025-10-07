@@ -33,9 +33,15 @@ function getTripDays(trip: TripWithLocation) {
 export default function TripDetailClient({ trip }: TripDetailClientProps) {
   const [activeTab, setActiveTab] = useState("overview");
 
-  // Derived ordered locations by 'order' (in case server returns unsorted)
+  // Derived ordered locations by day, then by order within each day
   const orderedLocations = useMemo(() => {
-    return [...trip.locations].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+    return [...trip.locations].sort((a, b) => {
+      // First sort by day
+      const dayDiff = (a.day ?? 1) - (b.day ?? 1);
+      if (dayDiff !== 0) return dayDiff;
+      // Then sort by order within the same day
+      return (a.order ?? 0) - (b.order ?? 0);
+    });
   }, [trip.locations]);
 
   return (
@@ -210,6 +216,7 @@ export default function TripDetailClient({ trip }: TripDetailClientProps) {
                 locations={orderedLocations}
                 tripId={trip.id}
                 tripDays={getTripDays(trip)}
+                tripStartDate={trip.startDate}
               />
             )}
           </TabsContent>

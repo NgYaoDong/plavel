@@ -16,13 +16,11 @@ export async function reorderItinerary(tripId: string, newOrder: string[]) {
   });
 
   // Create a map of locationId -> day
-  const locationDayMap = new Map(
-    locations.map((loc) => [loc.id, loc.day])
-  );
+  const locationDayMap = new Map(locations.map((loc) => [loc.id, loc.day]));
 
   // Group newOrder by day and assign order within each day
   const updatesByDay = new Map<number, string[]>();
-  
+
   for (const locationId of newOrder) {
     const day = locationDayMap.get(locationId) ?? 1;
     if (!updatesByDay.has(day)) {
@@ -32,19 +30,18 @@ export async function reorderItinerary(tripId: string, newOrder: string[]) {
   }
 
   // Create update operations for each location with order within its day
-  const updates = Array.from(updatesByDay.values()).flatMap(
-    (locationIds) =>
-      locationIds.map((locationId, orderInDay) =>
-        prisma.location.updateMany({
-          where: {
-            id: locationId,
-            tripId: tripId,
-          },
-          data: {
-            order: orderInDay, // Order within the day
-          },
-        })
-      )
+  const updates = Array.from(updatesByDay.values()).flatMap((locationIds) =>
+    locationIds.map((locationId, orderInDay) =>
+      prisma.location.updateMany({
+        where: {
+          id: locationId,
+          tripId: tripId,
+        },
+        data: {
+          order: orderInDay, // Order within the day
+        },
+      })
+    )
   );
 
   await prisma.$transaction(updates);

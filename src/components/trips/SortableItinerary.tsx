@@ -23,12 +23,12 @@ import { reorderItinerary } from "@/lib/actions/reorder-itinerary";
 import { updateLocationDay } from "@/lib/actions/update-location-day";
 import RemoveLocationDialog from "./RemoveLocationDialog";
 import EditLocationForm from "./EditLocationForm";
-import { GripVertical, Clock } from "lucide-react";
+import { GripVertical, Clock, FileText, ExternalLink } from "lucide-react";
 
 // Helper function to format time
 function formatTime(date: Date | null | undefined): string {
   if (!date) return "";
-  return new Date(date).toLocaleTimeString("en-US", {
+  return new Date(date).toLocaleTimeString("en-sg", {
     hour: "numeric",
     minute: "2-digit",
     hour12: true,
@@ -50,6 +50,7 @@ interface SortableItineraryProps {
   locations: Location[];
   tripId: string;
   tripDays: number;
+  tripStartDate: Date;
 }
 
 function DroppableDay({
@@ -117,25 +118,58 @@ function SortableItem({
       {/* Location Info */}
       <div className="flex-1">
         <h4 className="font-medium text-gray-800">{item.locationTitle}</h4>
-        <p className="text-sm text-gray-500">
-          {item.address ||
-            `${item.latitude.toFixed(4)}, ${item.longitude.toFixed(4)}`}
-        </p>
-        
+        {item.address ? (
+          <a
+            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+              item.address
+            )}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm text-blue-600 hover:text-blue-800 hover:underline inline-flex items-center gap-1"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {item.address}
+            <ExternalLink className="h-3 w-3" />
+          </a>
+        ) : (
+          <p className="text-sm text-gray-500">
+            {`${item.latitude.toFixed(4)}, ${item.longitude.toFixed(4)}`}
+          </p>
+        )}
+
         {/* Time Display */}
         {(item.startTime || item.endTime) && (
-          <div className="flex items-center gap-2 mt-2 text-sm text-blue-600">
+          <div className="flex items-center gap-2 mt-2 text-sm text-teal-600">
             <Clock className="h-4 w-4" />
             <span>
-              {item.startTime && formatTime(item.startTime)}
-              {item.startTime && item.endTime && " - "}
-              {item.endTime && formatTime(item.endTime)}
-              {item.duration && (
-                <span className="text-gray-500 ml-2">
-                  ({formatDuration(item.duration)})
-                </span>
+              {item.startTime && item.endTime ? (
+                // Both start and end time
+                <>
+                  {formatTime(item.startTime)} - {formatTime(item.endTime)}
+                  {item.duration && (
+                    <span className="text-gray-500 ml-2">
+                      ({formatDuration(item.duration)})
+                    </span>
+                  )}
+                </>
+              ) : item.startTime ? (
+                // Only start time
+                <>Starts at {formatTime(item.startTime)}</>
+              ) : (
+                // Only end time
+                <>Ends at {formatTime(item.endTime)}</>
               )}
             </span>
+          </div>
+        )}
+
+        {/* Notes Display */}
+        {item.notes && (
+          <div className="mt-2 pt-2 border-t border-gray-100">
+            <div className="flex items-start gap-2 text-sm">
+              <FileText className="h-4 w-4 text-gray-400 flex-shrink-0 mt-0.5" />
+              <p className="text-gray-600 whitespace-pre-wrap">{item.notes}</p>
+            </div>
           </div>
         )}
       </div>
@@ -158,6 +192,7 @@ function SortableItinerary({
   locations,
   tripId,
   tripDays,
+  tripStartDate,
 }: SortableItineraryProps) {
   const id = useId();
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -182,9 +217,27 @@ function SortableItinerary({
     const day = i + 1;
     const dayLocs = optimisticLocations
       .filter((loc) => (loc.day || 1) === day)
-      .sort((a, b) => (a.order ?? 0) - (b.order ?? 0)); // Sort by order within day
+      .sort((a, b) => {
+        // If both have start times, sort by start time
+        if (a.startTime && b.startTime) {
+          return (
+            new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
+          );
+        }
+        // If only one has start time, prioritize it
+        if (a.startTime) return -1;
+        if (b.startTime) return 1;
+        // Otherwise sort by manual order
+        return (a.order ?? 0) - (b.order ?? 0);
+      });
+
+    // Calculate date for this day
+    const dayDate = new Date(tripStartDate);
+    dayDate.setDate(dayDate.getDate() + (day - 1));
+
     return {
       day,
+      dayDate,
       locations: dayLocs,
       itemIds: dayLocs.map((loc) => loc.id),
     };
@@ -326,50 +379,59 @@ function SortableItinerary({
       onDragEnd={handleDragEnd}
     >
       <div className="space-y-6">
-        {locationsByDay.map(({ day, locations: dayLocations, itemIds }) => (
-          <div
-            key={day}
-            className="bg-gray-50 rounded-xl p-4 border border-gray-200"
-          >
-            {/* Day Header */}
-            <div className="flex items-center gap-2 mb-4">
-              <div className="bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-semibold">
-                Day {day}
-              </div>
-              <div className="text-sm text-gray-500">
-                {dayLocations.length}{" "}
-                {dayLocations.length === 1 ? "location" : "locations"}
-              </div>
-            </div>
-
-            {/* Drop Zone */}
-            <SortableContext
-              id={`sortable-day-${day}`}
-              strategy={verticalListSortingStrategy}
-              items={itemIds}
+        {locationsByDay.map(
+          ({ day, dayDate, locations: dayLocations, itemIds }) => (
+            <div
+              key={day}
+              className="bg-gray-50 rounded-xl p-4 border border-gray-200"
             >
-              <DroppableDay day={day}>
-                {dayLocations.length === 0 ? (
-                  <div className="text-center py-8 text-gray-400 text-sm">
-                    Drop locations here or add new ones
-                  </div>
-                ) : (
-                  dayLocations.map((location) => (
-                    <SortableItem
-                      key={location.id}
-                      item={location}
-                      tripId={tripId}
-                      onRemove={() => {
-                        // onRemove is handled by the dialog component
-                        // No local state update needed - server action will trigger re-fetch
-                      }}
-                    />
-                  ))
-                )}
-              </DroppableDay>
-            </SortableContext>
-          </div>
-        ))}
+              {/* Day Header */}
+              <div className="flex items-center gap-2 mb-4">
+                <div className="bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-semibold">
+                  Day {day}
+                </div>
+                <div className="text-sm text-gray-600 font-medium">
+                  {dayDate.toLocaleDateString("en-SG", {
+                    weekday: "short",
+                    month: "short",
+                    day: "numeric",
+                  })}
+                </div>
+                <div className="text-sm text-gray-500">
+                  • {dayLocations.length}{" "}
+                  {dayLocations.length === 1 ? "location" : "locations"}
+                </div>
+              </div>
+
+              {/* Drop Zone */}
+              <SortableContext
+                id={`sortable-day-${day}`}
+                strategy={verticalListSortingStrategy}
+                items={itemIds}
+              >
+                <DroppableDay day={day}>
+                  {dayLocations.length === 0 ? (
+                    <div className="text-center py-8 text-gray-400 text-sm">
+                      Drop locations here or add new ones
+                    </div>
+                  ) : (
+                    dayLocations.map((location) => (
+                      <SortableItem
+                        key={location.id}
+                        item={location}
+                        tripId={tripId}
+                        onRemove={() => {
+                          // onRemove is handled by the dialog component
+                          // No local state update needed - server action will trigger re-fetch
+                        }}
+                      />
+                    ))
+                  )}
+                </DroppableDay>
+              </SortableContext>
+            </div>
+          )
+        )}
       </div>
 
       {/* Drag Overlay */}
@@ -381,24 +443,40 @@ function SortableItinerary({
               <h4 className="font-medium text-gray-800">
                 {activeLocation.locationTitle}
               </h4>
-              <p className="text-sm text-gray-500">
-                {activeLocation.address ||
-                  `${activeLocation.latitude.toFixed(
+              {activeLocation.address ? (
+                <span className="text-sm text-blue-600 inline-flex items-center gap-1">
+                  {activeLocation.address}
+                  <ExternalLink className="h-3 w-3" />
+                </span>
+              ) : (
+                <p className="text-sm text-gray-500">
+                  {`${activeLocation.latitude.toFixed(
                     4
                   )}, ${activeLocation.longitude.toFixed(4)}`}
-              </p>
+                </p>
+              )}
               {/* Time Display in Overlay */}
               {(activeLocation.startTime || activeLocation.endTime) && (
-                <div className="flex items-center gap-2 mt-2 text-sm text-blue-600">
+                <div className="flex items-center gap-2 mt-2 text-sm text-teal-600">
                   <Clock className="h-4 w-4" />
                   <span>
-                    {activeLocation.startTime && formatTime(activeLocation.startTime)}
-                    {activeLocation.startTime && activeLocation.endTime && " - "}
-                    {activeLocation.endTime && formatTime(activeLocation.endTime)}
-                    {activeLocation.duration && (
-                      <span className="text-gray-500 ml-2">
-                        ({formatDuration(activeLocation.duration)})
-                      </span>
+                    {activeLocation.startTime && activeLocation.endTime ? (
+                      // Both start and end time
+                      <>
+                        {formatTime(activeLocation.startTime)} -{" "}
+                        {formatTime(activeLocation.endTime)}
+                        {activeLocation.duration && (
+                          <span className="text-gray-500 ml-2">
+                            ({formatDuration(activeLocation.duration)})
+                          </span>
+                        )}
+                      </>
+                    ) : activeLocation.startTime ? (
+                      // Only start time
+                      <>Starts at {formatTime(activeLocation.startTime)}</>
+                    ) : (
+                      // Only end time
+                      <>Ends at {formatTime(activeLocation.endTime)}</>
                     )}
                   </span>
                 </div>
@@ -423,6 +501,7 @@ export default memo(SortableItinerary, (prevProps, nextProps) => {
       startTime: l.startTime,
       endTime: l.endTime,
       duration: l.duration,
+      notes: l.notes,
     }))
   );
   const nextSerialized = JSON.stringify(
@@ -434,6 +513,7 @@ export default memo(SortableItinerary, (prevProps, nextProps) => {
       startTime: l.startTime,
       endTime: l.endTime,
       duration: l.duration,
+      notes: l.notes,
     }))
   );
   return prevSerialized === nextSerialized;

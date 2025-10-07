@@ -61,8 +61,9 @@ export default function DeleteAccommodationDialog({
               Delete Accommodation
             </h2>
             <p className="text-gray-600 mb-6">
-              Are you sure you want to delete <strong>{accommodationName}</strong>?
-              This action cannot be undone.
+              Are you sure you want to delete{" "}
+              <strong>{accommodationName}</strong>? This action cannot be
+              undone.
             </p>
 
             <div className="flex gap-3 justify-end">

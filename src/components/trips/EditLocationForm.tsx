@@ -3,7 +3,7 @@
 import { Location } from "@/generated/prisma";
 import { useState, useTransition } from "react";
 import { Button } from "../ui/button";
-import { Pencil, X } from "lucide-react";
+import { Pencil, X, FileText } from "lucide-react";
 import { updateLocation } from "@/lib/actions/update-location";
 import TimeSlotPicker from "./TimeSlotPicker";
 
@@ -20,11 +20,16 @@ export default function EditLocationForm({
   const [isPending, startTransition] = useTransition();
   const [locationTitle, setLocationTitle] = useState(location.locationTitle);
   const [startTime, setStartTime] = useState<string>(
-    location.startTime ? new Date(location.startTime).toISOString().slice(0, 16) : ""
+    location.startTime
+      ? new Date(location.startTime).toISOString().slice(0, 16)
+      : ""
   );
   const [endTime, setEndTime] = useState<string>(
-    location.endTime ? new Date(location.endTime).toISOString().slice(0, 16) : ""
+    location.endTime
+      ? new Date(location.endTime).toISOString().slice(0, 16)
+      : ""
   );
+  const [notes, setNotes] = useState<string>(location.notes || "");
   const [error, setError] = useState<string>("");
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -39,7 +44,9 @@ export default function EditLocationForm({
         setIsOpen(false);
       });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to update location");
+      setError(
+        err instanceof Error ? err.message : "Failed to update location"
+      );
     }
   };
 
@@ -104,6 +111,28 @@ export default function EditLocationForm({
               onStartTimeChange={setStartTime}
               onEndTimeChange={setEndTime}
             />
+
+            {/* Notes */}
+            <div>
+              <label
+                htmlFor="notes"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
+                <div className="flex items-center gap-1">
+                  <FileText className="h-4 w-4" />
+                  <span>Notes (Optional)</span>
+                </div>
+              </label>
+              <textarea
+                id="notes"
+                name="notes"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                rows={4}
+                placeholder="Add notes about this location (e.g., activities to do, tips, reservations, etc.)"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+              />
+            </div>
 
             {/* Error Message */}
             {error && (
