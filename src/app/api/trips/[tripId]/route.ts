@@ -1,6 +1,5 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { checkTripAccess, getTripCollaborators } from "@/lib/trip-permissions";
 import { NextResponse } from "next/server";
 
 export async function GET(
@@ -15,14 +14,9 @@ export async function GET(
 
     const { tripId } = await params;
 
-    // Check access
-    const accessCheck = await checkTripAccess(tripId, session.user.id, "viewer");
-    if (!accessCheck.hasAccess) {
-      return NextResponse.json({ error: "Access denied" }, { status: 403 });
-    }
-
-    // Fetch trip data in parallel for speed
-    const [trip, payments, collaborators] = await Promise.all([
+    // OPTIMIZATION: Single query to fetch everything we need
+    // This replaces 3 separate queries (checkTripAccess, trip data, getTripCollaborators)
+    const [trip, payments] = await Promise.all([
       prisma.trip.findUnique({
         where: { id: tripId },
         include: {
@@ -98,22 +92,54 @@ export async function GET(
           createdAt: "desc",
         },
       }),
-      getTripCollaborators(tripId),
     ]);
 
     if (!trip) {
       return NextResponse.json({ error: "Trip not found" }, { status: 404 });
     }
 
-    return NextResponse.json({
-      trip,
-      payments,
-      collaborators,
-      currentUserId: session.user.id,
-      userRole: accessCheck.role,
-      isOwner: trip.userId === session.user.id,
-      pendingInvites: trip.invites,
-    });
+    // Check access inline (instead of separate query)
+    const isOwner = trip.userId === session.user.id;
+    const userShare = trip.shares.find((s) => s.user.id === session.user!.id);
+    const hasAccess = isOwner || !!userShare;
+
+    if (!hasAccess) {
+      return NextResponse.json({ error: "Access denied" }, { status: 403 });
+    }
+
+    const userRole = isOwner ? "owner" : (userShare?.role as "admin" | "editor" | "viewer");
+
+    // Build collaborators list inline (instead of separate query)
+    const collaborators = [
+      {
+        ...trip.user,
+        role: "owner" as const,
+        shareId: null,
+      },
+      ...trip.shares.map((share) => ({
+        ...share.user,
+        role: share.role,
+        shareId: share.id,
+      })),
+    ];
+
+    return NextResponse.json(
+      {
+        trip,
+        payments,
+        collaborators,
+        currentUserId: session.user.id,
+        userRole,
+        isOwner,
+        pendingInvites: trip.invites,
+      },
+      {
+        headers: {
+          // Cache for 10 seconds, allow stale content for 30 seconds while revalidating
+          "Cache-Control": "private, max-age=10, stale-while-revalidate=30",
+        },
+      }
+    );
   } catch (error) {
     console.error("Error fetching trip:", error);
     return NextResponse.json(
