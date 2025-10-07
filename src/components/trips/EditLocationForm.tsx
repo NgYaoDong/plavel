@@ -1,0 +1,138 @@
+"use client";
+
+import { Location } from "@/generated/prisma";
+import { useState, useTransition } from "react";
+import { Button } from "../ui/button";
+import { Pencil, X } from "lucide-react";
+import { updateLocation } from "@/lib/actions/update-location";
+import TimeSlotPicker from "./TimeSlotPicker";
+
+interface EditLocationFormProps {
+  location: Location;
+  tripId: string;
+}
+
+export default function EditLocationForm({
+  location,
+  tripId,
+}: EditLocationFormProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [isPending, startTransition] = useTransition();
+  const [locationTitle, setLocationTitle] = useState(location.locationTitle);
+  const [startTime, setStartTime] = useState<string>(
+    location.startTime ? new Date(location.startTime).toISOString().slice(0, 16) : ""
+  );
+  const [endTime, setEndTime] = useState<string>(
+    location.endTime ? new Date(location.endTime).toISOString().slice(0, 16) : ""
+  );
+  const [error, setError] = useState<string>("");
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setError("");
+
+    const formData = new FormData(e.currentTarget);
+
+    try {
+      startTransition(async () => {
+        await updateLocation(formData, location.id, tripId);
+        setIsOpen(false);
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update location");
+    }
+  };
+
+  if (!isOpen) {
+    return (
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => setIsOpen(true)}
+        className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+      >
+        <Pencil className="h-4 w-4" />
+      </Button>
+    );
+  }
+
+  return (
+    <div
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+      onClick={() => setIsOpen(false)}
+    >
+      <div
+        className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold text-gray-900">Edit Location</h2>
+            <button
+              onClick={() => setIsOpen(false)}
+              className="text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <X className="h-6 w-6" />
+            </button>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Location Title */}
+            <div>
+              <label
+                htmlFor="locationTitle"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
+                Location Name
+              </label>
+              <input
+                type="text"
+                id="locationTitle"
+                name="locationTitle"
+                value={locationTitle}
+                onChange={(e) => setLocationTitle(e.target.value)}
+                required
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="e.g., Marina Bay Sands"
+              />
+            </div>
+
+            {/* Time Slot Picker */}
+            <TimeSlotPicker
+              startTime={startTime}
+              endTime={endTime}
+              onStartTimeChange={setStartTime}
+              onEndTimeChange={setEndTime}
+            />
+
+            {/* Error Message */}
+            {error && (
+              <div className="bg-red-50 text-red-600 px-4 py-3 rounded-lg text-sm">
+                {error}
+              </div>
+            )}
+
+            {/* Actions */}
+            <div className="flex gap-3 justify-end pt-4 border-t">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setIsOpen(false)}
+                disabled={isPending}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={isPending}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                {isPending ? "Saving..." : "Save Changes"}
+              </Button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+}

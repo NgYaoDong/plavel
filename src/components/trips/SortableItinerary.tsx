@@ -22,7 +22,29 @@ import { useId, useState, memo, useEffect } from "react";
 import { reorderItinerary } from "@/lib/actions/reorder-itinerary";
 import { updateLocationDay } from "@/lib/actions/update-location-day";
 import RemoveLocationDialog from "./RemoveLocationDialog";
-import { GripVertical } from "lucide-react";
+import EditLocationForm from "./EditLocationForm";
+import { GripVertical, Clock } from "lucide-react";
+
+// Helper function to format time
+function formatTime(date: Date | null | undefined): string {
+  if (!date) return "";
+  return new Date(date).toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+}
+
+// Helper function to format duration
+function formatDuration(minutes: number | null | undefined): string {
+  if (!minutes) return "";
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  if (hours > 0) {
+    return `${hours}h ${mins}m`;
+  }
+  return `${mins}m`;
+}
 
 interface SortableItineraryProps {
   locations: Location[];
@@ -99,10 +121,28 @@ function SortableItem({
           {item.address ||
             `${item.latitude.toFixed(4)}, ${item.longitude.toFixed(4)}`}
         </p>
+        
+        {/* Time Display */}
+        {(item.startTime || item.endTime) && (
+          <div className="flex items-center gap-2 mt-2 text-sm text-blue-600">
+            <Clock className="h-4 w-4" />
+            <span>
+              {item.startTime && formatTime(item.startTime)}
+              {item.startTime && item.endTime && " - "}
+              {item.endTime && formatTime(item.endTime)}
+              {item.duration && (
+                <span className="text-gray-500 ml-2">
+                  ({formatDuration(item.duration)})
+                </span>
+              )}
+            </span>
+          </div>
+        )}
       </div>
 
-      {/* Remove Button */}
-      <div className="flex-shrink-0">
+      {/* Action Buttons */}
+      <div className="flex-shrink-0 flex gap-1">
+        <EditLocationForm location={item} tripId={tripId} />
         <RemoveLocationDialog
           locationId={item.id}
           locationTitle={item.locationTitle}
@@ -347,6 +387,22 @@ function SortableItinerary({
                     4
                   )}, ${activeLocation.longitude.toFixed(4)}`}
               </p>
+              {/* Time Display in Overlay */}
+              {(activeLocation.startTime || activeLocation.endTime) && (
+                <div className="flex items-center gap-2 mt-2 text-sm text-blue-600">
+                  <Clock className="h-4 w-4" />
+                  <span>
+                    {activeLocation.startTime && formatTime(activeLocation.startTime)}
+                    {activeLocation.startTime && activeLocation.endTime && " - "}
+                    {activeLocation.endTime && formatTime(activeLocation.endTime)}
+                    {activeLocation.duration && (
+                      <span className="text-gray-500 ml-2">
+                        ({formatDuration(activeLocation.duration)})
+                      </span>
+                    )}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
         ) : null}
@@ -364,6 +420,9 @@ export default memo(SortableItinerary, (prevProps, nextProps) => {
       order: l.order,
       day: l.day,
       locationTitle: l.locationTitle,
+      startTime: l.startTime,
+      endTime: l.endTime,
+      duration: l.duration,
     }))
   );
   const nextSerialized = JSON.stringify(
@@ -372,6 +431,9 @@ export default memo(SortableItinerary, (prevProps, nextProps) => {
       order: l.order,
       day: l.day,
       locationTitle: l.locationTitle,
+      startTime: l.startTime,
+      endTime: l.endTime,
+      duration: l.duration,
     }))
   );
   return prevSerialized === nextSerialized;

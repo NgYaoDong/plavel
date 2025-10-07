@@ -87,15 +87,18 @@ model Trip {
 }
 
 model Location {
-  id            String  @id @default(cuid())
+  id            String    @id @default(cuid())
   locationTitle String
   address       String? // Full formatted address
   latitude      Float
   longitude     Float
-  day           Int     @default(1) // Which day of the trip this location belongs to
+  day           Int       @default(1) // Which day of the trip this location belongs to
+  startTime     DateTime? // When to visit this location
+  endTime       DateTime? // When to leave this location
+  duration      Int? // Duration in minutes (auto-calculated or manual)
   tripId        String
-  trip          Trip    @relation(fields: [tripId], references: [id], onDelete: Cascade)
-  order         Int     @default(0)
+  trip          Trip      @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  order         Int       @default(0)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -103,7 +106,7 @@ model Location {
 
 model Accommodation {
   id                 String   @id @default(cuid())
-  name               String   // Hotel/Airbnb name
+  name               String // Hotel/Airbnb name
   address            String?
   checkInDate        DateTime
   checkOutDate       DateTime
@@ -119,19 +122,19 @@ model Accommodation {
 }
 
 model Flight {
-  id                String    @id @default(cuid())
-  airline           String    // Airline name (e.g., "Singapore Airlines")
-  flightNumber      String    // Flight number (e.g., "SQ123")
-  departureAirport  String    // Departure airport code or name (e.g., "SIN - Singapore")
-  arrivalAirport    String    // Arrival airport code or name (e.g., "NRT - Tokyo")
-  departureTime     DateTime  // Departure date and time
-  arrivalTime       DateTime  // Arrival date and time
-  bookingReference  String?   // Booking/confirmation number
-  cost              Float?    // Ticket cost
-  seatNumber        String?   // Seat assignment (e.g., "12A")
-  notes             String?   // Additional notes
-  tripId            String
-  trip              Trip      @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  id               String   @id @default(cuid())
+  airline          String // Airline name (e.g., "Singapore Airlines")
+  flightNumber     String // Flight number (e.g., "SQ123")
+  departureAirport String // Departure airport code or name (e.g., "SIN - Singapore")
+  arrivalAirport   String // Arrival airport code or name (e.g., "NRT - Tokyo")
+  departureTime    DateTime // Departure date and time
+  arrivalTime      DateTime // Arrival date and time
+  bookingReference String? // Booking/confirmation number
+  cost             Float? // Ticket cost
+  seatNumber       String? // Seat assignment (e.g., "12A")
+  notes            String? // Additional notes
+  tripId           String
+  trip             Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

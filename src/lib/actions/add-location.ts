@@ -35,6 +35,33 @@ export async function addLocation(formData: FormData, tripId: string) {
   if (!address) {
     throw new Error("Address is required");
   }
+
+  // Get optional time fields
+  const startTimeStr = formData.get("startTime")?.toString();
+  const endTimeStr = formData.get("endTime")?.toString();
+  
+  let startTime: Date | undefined;
+  let endTime: Date | undefined;
+  let duration: number | undefined;
+
+  // Parse and validate times if provided
+  if (startTimeStr) {
+    startTime = new Date(startTimeStr);
+  }
+  if (endTimeStr) {
+    endTime = new Date(endTimeStr);
+  }
+
+  // Validate time order if both are provided
+  if (startTime && endTime && endTime <= startTime) {
+    throw new Error("End time must be after start time");
+  }
+
+  // Calculate duration in minutes if both times are provided
+  if (startTime && endTime) {
+    duration = Math.round((endTime.getTime() - startTime.getTime()) / (1000 * 60));
+  }
+
   // Try to use precise lat/lng from Places autocomplete if provided
   const formLat = formData.get("lat")?.toString();
   const formLng = formData.get("lng")?.toString();
@@ -57,6 +84,9 @@ export async function addLocation(formData: FormData, tripId: string) {
     include: { locations: true },
   });
 
+  // Check if user specified a day
+  const userSelectedDay = formData.get("day")?.toString();
+  
   // Calculate which day to assign based on existing locations
   // Default to day 1, or distribute evenly across trip days
   let assignedDay = 1;
@@ -68,21 +98,29 @@ export async function addLocation(formData: FormData, tripId: string) {
         (1000 * 60 * 60 * 24)
     );
 
-    // Count locations per day
-    const locationCounts = Array.from({ length: tripDuration }, (_, i) => {
-      const day = i + 1;
-      return {
-        day,
-        count: trip.locations.filter((loc) => loc.day === day).length,
-      };
-    });
+    // If user selected a specific day, use that
+    if (userSelectedDay) {
+      const selectedDayNum = parseInt(userSelectedDay);
+      if (selectedDayNum >= 1 && selectedDayNum <= tripDuration) {
+        assignedDay = selectedDayNum;
+        orderInDay = trip.locations.filter((loc) => loc.day === selectedDayNum).length;
+      }
+    } else {
+      // Auto-assign to the day with the fewest locations
+      const locationCounts = Array.from({ length: tripDuration }, (_, i) => {
+        const day = i + 1;
+        return {
+          day,
+          count: trip.locations.filter((loc) => loc.day === day).length,
+        };
+      });
 
-    // Assign to the day with the fewest locations
-    const targetDay = locationCounts.reduce((prev, curr) =>
-      curr.count < prev.count ? curr : prev
-    );
-    assignedDay = targetDay.day;
-    orderInDay = targetDay.count; // Order within the day (0-indexed)
+      const targetDay = locationCounts.reduce((prev, curr) =>
+        curr.count < prev.count ? curr : prev
+      );
+      assignedDay = targetDay.day;
+      orderInDay = targetDay.count; // Order within the day (0-indexed)
+    }
   }
 
   await prisma.location.create({
@@ -94,6 +132,9 @@ export async function addLocation(formData: FormData, tripId: string) {
       tripId,
       order: orderInDay, // Order within the specific day
       day: assignedDay, // Auto-assign to a day
+      startTime,
+      endTime,
+      duration,
     },
   });
 

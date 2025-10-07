@@ -4,14 +4,20 @@ import { useRef, useState, useTransition } from "react";
 import { Button } from "../ui/button";
 import { addLocation } from "@/lib/actions/add-location";
 import { Autocomplete, GoogleMap, Marker, useLoadScript } from "@react-google-maps/api";
-import { MapPin, Loader2 } from "lucide-react";
+import { MapPin, Loader2, ArrowLeft, Calendar } from "lucide-react";
+import TimeSlotPicker from "./TimeSlotPicker";
+import { useRouter } from "next/navigation";
 
-export default function NewLocationClient({ tripId }: { tripId: string }) {
+export default function NewLocationClient({ tripId, tripDays }: { tripId: string; tripDays: number }) {
+  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [query, setQuery] = useState("");
   const [lat, setLat] = useState<string>("");
   const [lng, setLng] = useState<string>("");
   const [placeId, setPlaceId] = useState<string>("");
+  const [startTime, setStartTime] = useState<string>("");
+  const [endTime, setEndTime] = useState<string>("");
+  const [selectedDay, setSelectedDay] = useState<string>("");
   const inputRef = useRef<HTMLInputElement | null>(null);
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
 
@@ -36,7 +42,19 @@ export default function NewLocationClient({ tripId }: { tripId: string }) {
   }
 
   return (
-    <div className="min-h-[calc(100vh-8rem)] flex items-center justify-center bg-gray-50 px-4">
+    <div className="min-h-[calc(100vh-8rem)] bg-gray-50 px-4 py-6">
+      {/* Back Button */}
+      <div className="max-w-2xl mx-auto mb-4">
+        <Button
+          variant="ghost"
+          onClick={() => router.back()}
+          className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to Trip
+        </Button>
+      </div>
+
       <div className="w-full max-w-2xl mx-auto">
         <div className="bg-white p-8 shadow-xl rounded-2xl border border-gray-100">
           <h1 className="text-3xl font-bold mb-2 text-center">
@@ -102,6 +120,45 @@ export default function NewLocationClient({ tripId }: { tripId: string }) {
               <input type="hidden" name="lng" value={lng} />
               <input type="hidden" name="placeId" value={placeId} />
             </div>
+
+            {/* Day Selector */}
+            <div>
+              <label
+                htmlFor="day"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
+                <div className="flex items-center gap-1">
+                  <Calendar className="h-4 w-4" />
+                  <span>Day (Optional)</span>
+                </div>
+              </label>
+              <select
+                id="day"
+                name="day"
+                value={selectedDay}
+                onChange={(e) => setSelectedDay(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="">Auto-assign to day with fewest locations</option>
+                {Array.from({ length: tripDays }, (_, i) => (
+                  <option key={i + 1} value={i + 1}>
+                    Day {i + 1}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-gray-500 mt-2">
+                Leave blank to automatically distribute locations evenly across days.
+              </p>
+            </div>
+
+            {/* Time Slot Picker */}
+            <TimeSlotPicker
+              startTime={startTime}
+              endTime={endTime}
+              onStartTimeChange={setStartTime}
+              onEndTimeChange={setEndTime}
+            />
+
             {lat && lng && (
               <div>
                 <div className="text-sm font-medium text-gray-700 mb-2">Preview</div>
