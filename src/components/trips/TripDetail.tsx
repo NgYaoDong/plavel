@@ -1,6 +1,6 @@
 "use client";
 
-import { Location, Trip, Accommodation } from "@/generated/prisma";
+import { Location, Trip, Accommodation, Flight } from "@/generated/prisma";
 import Image from "next/image";
 import { ArrowLeft, Calendar, Edit2, MapPin, Plus } from "lucide-react";
 import Link from "next/link";
@@ -12,10 +12,12 @@ import Map from "@/components/trips/Map";
 import SortableItinerary from "@/components/trips/SortableItinerary";
 import DeleteTripDialog from "@/components/trips/DeleteTripDialog";
 import AccommodationsList from "@/components/trips/AccommodationsList";
+import FlightsList from "@/components/trips/FlightsList";
 
 type TripWithLocation = Trip & {
   locations: Location[];
   accommodations: Accommodation[];
+  flights: Flight[];
 };
 
 interface TripDetailClientProps {
@@ -95,6 +97,9 @@ export default function TripDetailClient({ trip }: TripDetailClientProps) {
           <TabsList className="mb-6">
             <TabsTrigger value="overview" className="text-lg">
               Overview
+            </TabsTrigger>
+            <TabsTrigger value="flights" className="text-lg">
+              Flights
             </TabsTrigger>
             <TabsTrigger value="accommodations" className="text-lg">
               Accommodations
@@ -214,6 +219,10 @@ export default function TripDetailClient({ trip }: TripDetailClientProps) {
               accommodations={trip.accommodations}
               tripId={trip.id}
             />
+          </TabsContent>
+
+          <TabsContent value="flights" className="space-y-6">
+            <FlightsList flights={trip.flights} tripId={trip.id} />
           </TabsContent>
 
           <TabsContent value="map" className="space-y-6">

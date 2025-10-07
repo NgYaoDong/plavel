@@ -80,6 +80,7 @@ model Trip {
 
   locations      Location[]
   accommodations Accommodation[]
+  flights        Flight[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -112,6 +113,25 @@ model Accommodation {
   notes              String?
   tripId             String
   trip               Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Flight {
+  id                String    @id @default(cuid())
+  airline           String    // Airline name (e.g., "Singapore Airlines")
+  flightNumber      String    // Flight number (e.g., "SQ123")
+  departureAirport  String    // Departure airport code or name (e.g., "SIN - Singapore")
+  arrivalAirport    String    // Arrival airport code or name (e.g., "NRT - Tokyo")
+  departureTime     DateTime  // Departure date and time
+  arrivalTime       DateTime  // Arrival date and time
+  bookingReference  String?   // Booking/confirmation number
+  cost              Float?    // Ticket cost
+  seatNumber        String?   // Seat assignment (e.g., "12A")
+  notes             String?   // Additional notes
+  tripId            String
+  trip              Trip      @relation(fields: [tripId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

@@ -21,7 +21,7 @@ export default function AccommodationsList({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:justify-between gap-4">
+      <div className="flex md:flex-row justify-between gap-4">
         <h2 className="text-2xl font-semibold">Accommodations</h2>
         <NewAccommodationForm tripId={tripId} />
       </div>

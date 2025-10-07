@@ -7,12 +7,9 @@ import {
   MapPin,
   FileText,
   Link as LinkIcon,
-  Trash2,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { deleteAccommodation } from "@/lib/actions/delete-accommodation";
-import { useState } from "react";
 import EditAccommodationForm from "./EditAccommodationForm";
+import DeleteAccommodationDialog from "./DeleteAccommodationDialog";
 
 interface AccommodationCardProps {
   accommodation: Accommodation;
@@ -23,25 +20,8 @@ export default function AccommodationCard({
   accommodation,
   tripId,
 }: AccommodationCardProps) {
-  const [isDeleting, setIsDeleting] = useState(false);
-
-  const handleDelete = async () => {
-    if (!confirm(`Are you sure you want to delete ${accommodation.name}?`)) {
-      return;
-    }
-
-    setIsDeleting(true);
-    try {
-      await deleteAccommodation(accommodation.id, tripId);
-    } catch (error) {
-      console.error("Failed to delete accommodation:", error);
-      alert("Failed to delete accommodation. Please try again.");
-      setIsDeleting(false);
-    }
-  };
-
   const formatDate = (date: Date) => {
-    return new Date(date).toLocaleDateString("en-US", {
+    return new Date(date).toLocaleDateString("en-SG", {
       month: "short",
       day: "numeric",
       year: "numeric",
@@ -76,15 +56,11 @@ export default function AccommodationCard({
             accommodation={accommodation}
             tripId={tripId}
           />
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleDelete}
-            disabled={isDeleting}
-            className="text-red-600 hover:text-red-700 hover:bg-red-50"
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
+          <DeleteAccommodationDialog
+            accommodationId={accommodation.id}
+            accommodationName={accommodation.name}
+            tripId={tripId}
+          />
         </div>
       </div>
 
