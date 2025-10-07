@@ -1,6 +1,6 @@
 "use client";
 
-import { loginWithGitHub, loginWithGoogle, logout } from "@/lib/auth-actions";
+import { loginWithGoogle, logout } from "@/lib/auth-actions";
 import { Session } from "next-auth";
 import Image from "next/image";
 import Link from "next/link";
