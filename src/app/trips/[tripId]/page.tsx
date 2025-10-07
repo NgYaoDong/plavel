@@ -5,7 +5,8 @@ import { prisma } from "@/lib/prisma";
 import { checkTripAccess, getTripCollaborators } from "@/lib/trip-permissions";
 import Image from "next/image";
 
-export const revalidate = 60;
+// Cache for 30 seconds - balance between freshness and performance
+export const revalidate = 30;
 
 export default async function TripDetail({
   params,
@@ -97,34 +98,14 @@ export default async function TripDetail({
     },
   });
 
-  // Fetch payments with splits
+  // Fetch payments with splits - optimized query
   const payments = await prisma.payment.findMany({
     where: { tripId },
     include: {
-      payer: {
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          image: true,
-          emailVerified: true,
-          createdAt: true,
-          updatedAt: true,
-        },
-      },
+      payer: true, // Fetch full user object for compatibility
       splits: {
         include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              image: true,
-              emailVerified: true,
-              createdAt: true,
-              updatedAt: true,
-            },
-          },
+          user: true, // Fetch full user object for compatibility
         },
       },
     },
