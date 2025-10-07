@@ -39,17 +39,28 @@ export async function updateLocation(
   // Get optional time fields
   const startTimeStr = formData.get("startTime")?.toString();
   const endTimeStr = formData.get("endTime")?.toString();
+  const timezoneOffsetStr = formData.get("timezoneOffset")?.toString();
 
   let startTime: Date | null = null;
   let endTime: Date | null = null;
   let duration: number | null = null;
 
+  // Parse timezone offset (in minutes, negative for ahead of UTC)
+  const timezoneOffset = timezoneOffsetStr ? parseInt(timezoneOffsetStr) : 0;
+
   // Parse and validate times if provided
+  // The datetime-local input sends time without timezone (e.g., "2024-10-08T10:00")
+  // We need to adjust for the user's timezone since the server might be in a different timezone
   if (startTimeStr) {
-    startTime = new Date(startTimeStr);
+    const localDate = new Date(startTimeStr);
+    // Adjust for timezone: subtract the offset to get the correct UTC time
+    // If user is GMT+8 (Singapore), offset is -480 minutes
+    // We need to add those minutes back to get correct UTC
+    startTime = new Date(localDate.getTime() - timezoneOffset * 60 * 1000);
   }
   if (endTimeStr) {
-    endTime = new Date(endTimeStr);
+    const localDate = new Date(endTimeStr);
+    endTime = new Date(localDate.getTime() - timezoneOffset * 60 * 1000);
   }
 
   // Validate time order if both are provided

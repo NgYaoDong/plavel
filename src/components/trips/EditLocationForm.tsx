@@ -208,6 +208,13 @@ export default function EditLocationForm({
               </div>
             )}
 
+            {/* Hidden field for timezone offset */}
+            <input
+              type="hidden"
+              name="timezoneOffset"
+              value={new Date().getTimezoneOffset()}
+            />
+
             {/* Actions */}
             <div className="flex gap-3 justify-end pt-4 border-t">
               <Button

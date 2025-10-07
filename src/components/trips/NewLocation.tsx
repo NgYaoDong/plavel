@@ -278,6 +278,14 @@ export default function NewLocationClient({
                 </div>
               </div>
             )}
+
+            {/* Hidden field for timezone offset */}
+            <input
+              type="hidden"
+              name="timezoneOffset"
+              value={new Date().getTimezoneOffset()}
+            />
+
             <Button type="submit" className="w-full">
               {isPending ? "Adding..." : "Add Location"}
             </Button>

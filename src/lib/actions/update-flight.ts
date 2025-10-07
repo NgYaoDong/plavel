@@ -37,6 +37,7 @@ export async function updateFlight(
   const arrivalAirport = formData.get("arrivalAirport")?.toString();
   const departureTime = formData.get("departureTime")?.toString();
   const arrivalTime = formData.get("arrivalTime")?.toString();
+  const timezoneOffsetStr = formData.get("timezoneOffset")?.toString();
   const bookingReference = formData.get("bookingReference")?.toString();
   const costStr = formData.get("cost")?.toString();
   const seatNumber = formData.get("seatNumber")?.toString();
@@ -53,9 +54,16 @@ export async function updateFlight(
     throw new Error("Airline, flight number, airports, and times are required");
   }
 
+  // Parse timezone offset (in minutes, negative for ahead of UTC)
+  const timezoneOffset = timezoneOffsetStr ? parseInt(timezoneOffsetStr) : 0;
+
   // Validate arrival time is after departure time
-  const departure = new Date(departureTime);
-  const arrival = new Date(arrivalTime);
+  // Adjust for timezone: subtract the offset to get the correct UTC time
+  const departureLocal = new Date(departureTime);
+  const arrivalLocal = new Date(arrivalTime);
+  const departure = new Date(departureLocal.getTime() - timezoneOffset * 60 * 1000);
+  const arrival = new Date(arrivalLocal.getTime() - timezoneOffset * 60 * 1000);
+  
   if (arrival <= departure) {
     throw new Error("Arrival time must be after departure time");
   }

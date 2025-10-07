@@ -252,6 +252,13 @@ export default function NewFlightForm({ tripId }: NewFlightFormProps) {
           />
         </div>
 
+        {/* Hidden field for timezone offset */}
+        <input
+          type="hidden"
+          name="timezoneOffset"
+          value={new Date().getTimezoneOffset()}
+        />
+
         <div className="flex justify-end gap-2">
           <Button
             type="button"
