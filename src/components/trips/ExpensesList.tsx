@@ -101,17 +101,17 @@ function ExpenseCard({
     CATEGORY_COLORS.other;
 
   return (
-    <div className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-      <div className="flex-1">
-        <div className="flex items-center gap-3 mb-1">
-          <h4 className="font-medium text-gray-900">{expense.description}</h4>
+    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+      <div className="flex-1 min-w-0 w-full sm:w-auto">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-1">
+          <h4 className="font-medium text-gray-900 break-words">{expense.description}</h4>
           <span
-            className={`px-3 py-1 rounded-full text-xs font-medium border capitalize min-w-[110px] text-center ${colorClass}`}
+            className={`px-3 py-1 rounded-full text-xs font-medium border capitalize min-w-[110px] text-center ${colorClass} w-fit`}
           >
             {expense.category}
           </span>
         </div>
-        <div className="flex items-center gap-3 text-sm text-gray-500">
+        <div className="flex items-center gap-3 text-sm text-gray-500 flex-wrap">
           <span>{formatDate(expense.createdAt)}</span>
           <span className="font-semibold text-gray-900">
             {formatCurrency(expense.amount)}
@@ -120,7 +120,7 @@ function ExpenseCard({
       </div>
 
       {!showDeleteConfirm ? (
-        <div className="flex gap-1">
+        <div className="flex gap-1 self-end sm:self-center flex-shrink-0">
           <EditExpenseForm expense={expense} tripId={tripId} />
           <Button
             variant="ghost"
@@ -132,7 +132,7 @@ function ExpenseCard({
           </Button>
         </div>
       ) : (
-        <div className="flex gap-2">
+        <div className="flex gap-2 self-end sm:self-center flex-shrink-0">
           <Button
             variant="ghost"
             size="sm"

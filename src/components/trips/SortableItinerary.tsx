@@ -110,7 +110,7 @@ function SortableItem({
     <div
       ref={setNodeRef}
       style={style}
-      className="p-4 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition flex items-center gap-3"
+      className="p-4 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition flex flex-col sm:flex-row items-start sm:items-center gap-3"
     >
       {/* Drag Handle */}
       <div
@@ -122,8 +122,8 @@ function SortableItem({
       </div>
 
       {/* Location Info */}
-      <div className="flex-1">
-        <h4 className="font-medium text-gray-800">{item.locationTitle}</h4>
+      <div className="flex-1 min-w-0">
+        <h4 className="font-medium text-gray-800 break-words">{item.locationTitle}</h4>
         {item.address ? (
           <a
             href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
@@ -131,11 +131,11 @@ function SortableItem({
             )}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-sm text-blue-600 hover:text-blue-800 hover:underline inline-flex items-center gap-1"
+            className="text-sm text-blue-600 hover:text-blue-800 hover:underline inline-flex items-center gap-1 break-all"
             onClick={(e) => e.stopPropagation()}
           >
             {item.address}
-            <ExternalLink className="h-3 w-3" />
+            <ExternalLink className="h-3 w-3 flex-shrink-0" />
           </a>
         ) : (
           <p className="text-sm text-gray-500">
@@ -146,8 +146,8 @@ function SortableItem({
         {/* Time Display */}
         {(item.startTime || item.endTime) && (
           <div className="flex items-center gap-2 mt-2 text-sm text-teal-600">
-            <Clock className="h-4 w-4" />
-            <span>
+            <Clock className="h-4 w-4 flex-shrink-0" />
+            <span className="break-words">
               {item.startTime && item.endTime ? (
                 // Both start and end time
                 <>
@@ -174,7 +174,7 @@ function SortableItem({
           <div className="mt-2 pt-2 border-t border-gray-100">
             <div className="flex items-start gap-2 text-sm">
               <FileText className="h-4 w-4 text-gray-400 flex-shrink-0 mt-0.5" />
-              <p className="text-gray-600 whitespace-pre-wrap">{item.notes}</p>
+              <p className="text-gray-600 whitespace-pre-wrap break-words">{item.notes}</p>
             </div>
           </div>
         )}
@@ -185,7 +185,7 @@ function SortableItem({
             <div className="flex items-center gap-3 flex-wrap text-sm">
               {item.cost && (
                 <div className="flex items-center gap-1 text-gray-700">
-                  <DollarSign className="h-4 w-4 text-gray-400" />
+                  <DollarSign className="h-4 w-4 text-gray-400 flex-shrink-0" />
                   <span className="font-medium">
                     $
                     {item.cost.toLocaleString("en-US", {
@@ -220,7 +220,7 @@ function SortableItem({
       </div>
 
       {/* Action Buttons */}
-      <div className="flex-shrink-0 flex gap-1">
+      <div className="flex-shrink-0 flex gap-1 self-end sm:self-center">
         <EditLocationForm location={item} tripId={tripId} />
         <RemoveLocationDialog
           locationId={item.id}
