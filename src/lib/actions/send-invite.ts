@@ -127,19 +127,19 @@ export async function sendInvite(
     const inviteLink = `${baseUrl}/invites/${invite.token}`;
 
     // Format trip dates
-    const startDate = new Date(trip.startDate).toLocaleDateString("en-US", {
+    const startDate = new Date(trip.startDate).toLocaleDateString("en-SG", {
       month: "long",
       day: "numeric",
       year: "numeric",
     });
-    const endDate = new Date(trip.endDate).toLocaleDateString("en-US", {
+    const endDate = new Date(trip.endDate).toLocaleDateString("en-SG", {
       month: "long",
       day: "numeric",
       year: "numeric",
     });
     const tripDates = `${startDate} - ${endDate}`;
 
-    const expiryDate = expiresAt.toLocaleDateString("en-US", {
+    const expiryDate = expiresAt.toLocaleDateString("en-SG", {
       month: "long",
       day: "numeric",
       year: "numeric",

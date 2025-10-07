@@ -91,9 +91,9 @@ export default function TripDetailClient({
   // Only poll if there are collaborators (shared trip)
   const hasCollaborators =
     collaborators.length > 1 || pendingInvites.length > 0;
-  // Poll every 10 seconds if shared, don't poll if not shared
+  // Poll every 5 seconds if shared, don't poll if not shared
   // Use custom refresh function if provided (for CSR), otherwise use router.refresh (for SSR)
-  useTripPolling(trip.id, hasCollaborators ? 10000 : 0, onRefresh);
+  useTripPolling(trip.id, hasCollaborators ? 5000 : 0, onRefresh);
 
   // Check if user can edit (editor, admin, or owner)
   const canEdit =

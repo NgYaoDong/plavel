@@ -7,6 +7,18 @@ import { Pencil, X, FileText, DollarSign } from "lucide-react";
 import { updateLocation } from "@/lib/actions/update-location";
 import TimeSlotPicker from "./TimeSlotPicker";
 
+// Helper to convert Date to local datetime-local input format
+function toLocalDateTimeString(date: Date | null | undefined): string {
+  if (!date) return "";
+  const d = new Date(date);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  const hours = String(d.getHours()).padStart(2, "0");
+  const minutes = String(d.getMinutes()).padStart(2, "0");
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+}
+
 interface EditLocationFormProps {
   location: Location;
   tripId: string;
@@ -20,14 +32,10 @@ export default function EditLocationForm({
   const [isPending, startTransition] = useTransition();
   const [locationTitle, setLocationTitle] = useState(location.locationTitle);
   const [startTime, setStartTime] = useState<string>(
-    location.startTime
-      ? new Date(location.startTime).toISOString().slice(0, 16)
-      : ""
+    toLocalDateTimeString(location.startTime)
   );
   const [endTime, setEndTime] = useState<string>(
-    location.endTime
-      ? new Date(location.endTime).toISOString().slice(0, 16)
-      : ""
+    toLocalDateTimeString(location.endTime)
   );
   const [notes, setNotes] = useState<string>(location.notes || "");
   const [cost, setCost] = useState<string>(

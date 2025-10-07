@@ -34,7 +34,7 @@ import {
 // Helper function to format time
 function formatTime(date: Date | null | undefined): string {
   if (!date) return "";
-  return new Date(date).toLocaleTimeString("en-sg", {
+  return new Date(date).toLocaleTimeString("en-SG", {
     hour: "numeric",
     minute: "2-digit",
     hour12: true,
@@ -188,7 +188,7 @@ function SortableItem({
                   <DollarSign className="h-4 w-4 text-gray-400 flex-shrink-0" />
                   <span className="font-medium">
                     $
-                    {item.cost.toLocaleString("en-US", {
+                    {item.cost.toLocaleString("en-SG", {
                       minimumFractionDigits: 0,
                       maximumFractionDigits: 2,
                     })}

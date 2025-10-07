@@ -100,7 +100,7 @@ export default function AccommodationCard({
           <div className="flex items-center gap-2 font-medium text-gray-900">
             <span>
               $
-              {accommodation.cost.toLocaleString("en-US", {
+              {accommodation.cost.toLocaleString("en-SG", {
                 minimumFractionDigits: 0,
                 maximumFractionDigits: 2,
               })}

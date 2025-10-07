@@ -58,7 +58,7 @@ export default function InviteAcceptanceClient({
   };
 
   const formatDate = (date: Date) => {
-    return new Date(date).toLocaleDateString("en-US", {
+    return new Date(date).toLocaleDateString("en-SG", {
       year: "numeric",
       month: "long",
       day: "numeric",
@@ -181,7 +181,7 @@ export default function InviteAcceptanceClient({
           {/* Expiry Notice */}
           <p className="text-center text-xs text-gray-500 mt-4">
             This invitation expires on{" "}
-            {new Date(invite.expiresAt).toLocaleDateString("en-US", {
+            {new Date(invite.expiresAt).toLocaleDateString("en-SG", {
               year: "numeric",
               month: "long",
               day: "numeric",

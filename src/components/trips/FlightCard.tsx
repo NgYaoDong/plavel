@@ -22,7 +22,7 @@ interface FlightCardProps {
 
 export default function FlightCard({ flight, tripId, canEdit }: FlightCardProps) {
   const formatDateTime = (date: Date) => {
-    return new Date(date).toLocaleString("en-sg", {
+    return new Date(date).toLocaleString("en-SG", {
       month: "short",
       day: "numeric",
       year: "numeric",
@@ -131,7 +131,7 @@ export default function FlightCard({ flight, tripId, canEdit }: FlightCardProps)
             <span className="text-gray-600">Cost:</span>
             <span className="font-medium text-gray-900">
               $
-              {flight.cost.toLocaleString("en-US", {
+              {flight.cost.toLocaleString("en-SG", {
                 minimumFractionDigits: 0,
                 maximumFractionDigits: 2,
               })}
