@@ -18,7 +18,12 @@ export default async function TripDetail({
   // Fetch trip details from your database using the tripId
   const trip = await prisma.trip.findUnique({
     where: { id: tripId, userId: session.user?.id },
-    include: { locations: true, accommodations: true, flights: true },
+    include: {
+      locations: true,
+      accommodations: true,
+      flights: true,
+      expenses: true,
+    },
   });
 
   if (!trip) {

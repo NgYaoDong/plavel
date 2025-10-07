@@ -1,6 +1,12 @@
 "use client";
 
-import { Location, Trip, Accommodation, Flight } from "@/generated/prisma";
+import {
+  Location,
+  Trip,
+  Accommodation,
+  Flight,
+  Expense,
+} from "@/generated/prisma";
 import Image from "next/image";
 import { ArrowLeft, Calendar, Edit2, MapPin, Plus } from "lucide-react";
 import Link from "next/link";
@@ -13,11 +19,13 @@ import SortableItinerary from "@/components/trips/SortableItinerary";
 import DeleteTripDialog from "@/components/trips/DeleteTripDialog";
 import AccommodationsList from "@/components/trips/AccommodationsList";
 import FlightsList from "@/components/trips/FlightsList";
+import { BudgetOverview } from "@/components/trips/BudgetOverview";
 
 type TripWithLocation = Trip & {
   locations: Location[];
   accommodations: Accommodation[];
   flights: Flight[];
+  expenses: Expense[];
 };
 
 interface TripDetailClientProps {
@@ -80,7 +88,7 @@ export default function TripDetailClient({ trip }: TripDetailClientProps) {
             <p className="text-gray-600 text-sm">{trip.description}</p>
           )}
           <div className="flex items-center text-gray-500 mt-2">
-            <Calendar className="h-5 w-5 mr-1" />
+            <Calendar className="h-5 w-5 mr-2" />
             <span>
               {new Date(trip.startDate).toLocaleDateString("en-SG", {
                 year: "numeric",
@@ -98,22 +106,25 @@ export default function TripDetailClient({ trip }: TripDetailClientProps) {
         </div>
       </div>
 
-      <div className="bg-white p-6 shadow rounded-lg">
+      <div className="bg-white p-4 md:p-6 shadow rounded-lg">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="mb-6">
-            <TabsTrigger value="overview" className="text-lg">
+          <TabsList className="mb-6 flex-wrap h-auto gap-2">
+            <TabsTrigger value="overview" className="text-sm md:text-lg">
               Overview
             </TabsTrigger>
-            <TabsTrigger value="flights" className="text-lg">
+            <TabsTrigger value="flights" className="text-sm md:text-lg">
               Flights
             </TabsTrigger>
-            <TabsTrigger value="accommodations" className="text-lg">
+            <TabsTrigger value="accommodations" className="text-sm md:text-lg">
               Accommodations
             </TabsTrigger>
-            <TabsTrigger value="itinerary" className="text-lg">
+            <TabsTrigger value="itinerary" className="text-sm md:text-lg">
               Itinerary
             </TabsTrigger>
-            <TabsTrigger value="map" className="text-lg">
+            <TabsTrigger value="budget" className="text-sm md:text-lg">
+              Budget
+            </TabsTrigger>
+            <TabsTrigger value="map" className="text-sm md:text-lg">
               Map
             </TabsTrigger>
           </TabsList>
@@ -189,9 +200,9 @@ export default function TripDetailClient({ trip }: TripDetailClientProps) {
           </TabsContent>
 
           <TabsContent value="itinerary" className="space-y-6">
-            <div className="flex justify-between items-center mb-4">
+            <div className="flex md:flex-row justify-between gap-4">
               <h2 className="text-2xl font-semibold">Itinerary</h2>
-              <div className="mt-4 md:mt-0">
+              <div className="w-auto">
                 <Link href={`/trips/${trip.id}/itinerary/new`}>
                   <Button>
                     <Plus /> Add Location
@@ -230,6 +241,10 @@ export default function TripDetailClient({ trip }: TripDetailClientProps) {
 
           <TabsContent value="flights" className="space-y-6">
             <FlightsList flights={trip.flights} tripId={trip.id} />
+          </TabsContent>
+
+          <TabsContent value="budget" className="space-y-6">
+            <BudgetOverview trip={trip} />
           </TabsContent>
 
           <TabsContent value="map" className="space-y-6">

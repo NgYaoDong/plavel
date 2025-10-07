@@ -9,7 +9,14 @@ import {
   Marker,
   useLoadScript,
 } from "@react-google-maps/api";
-import { MapPin, Loader2, ArrowLeft, Calendar, FileText } from "lucide-react";
+import {
+  MapPin,
+  Loader2,
+  ArrowLeft,
+  Calendar,
+  FileText,
+  DollarSign,
+} from "lucide-react";
 import TimeSlotPicker from "./TimeSlotPicker";
 import { useRouter } from "next/navigation";
 
@@ -196,6 +203,57 @@ export default function NewLocationClient({
               <p className="text-xs text-gray-500 mt-2">
                 Add any helpful information or reminders about this location.
               </p>
+            </div>
+
+            {/* Cost and Category */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label
+                  htmlFor="cost"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
+                  <div className="flex items-center gap-1">
+                    <DollarSign className="h-4 w-4" />
+                    <span>Cost (Optional)</span>
+                  </div>
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+                    $
+                  </span>
+                  <input
+                    type="number"
+                    id="cost"
+                    name="cost"
+                    placeholder="0"
+                    min="0"
+                    step="0.01"
+                    className="w-full border border-gray-300 rounded-lg pl-8 pr-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label
+                  htmlFor="category"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
+                  Category (Optional)
+                </label>
+                <select
+                  id="category"
+                  name="category"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="">Select a category</option>
+                  <option value="food">Food & Dining</option>
+                  <option value="transport">Transport</option>
+                  <option value="activity">Activity</option>
+                  <option value="shopping">Shopping</option>
+                  <option value="entertainment">Entertainment</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
             </div>
 
             {lat && lng && (

@@ -93,8 +93,17 @@ export default function AccommodationCard({
         )}
 
         {accommodation.cost && (
-          <div className="font-medium text-green-600">
-            ${accommodation.cost.toFixed(2)}
+          <div className="flex items-center gap-2 font-medium text-gray-900">
+            <span>
+              $
+              {accommodation.cost.toLocaleString("en-US", {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 2,
+              })}
+            </span>
+            <span className="text-gray-500 text-xs font-normal">
+              (${(accommodation.cost / nights).toFixed(2)}/night)
+            </span>
           </div>
         )}
 

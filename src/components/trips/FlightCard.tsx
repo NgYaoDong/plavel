@@ -126,8 +126,12 @@ export default function FlightCard({ flight, tripId }: FlightCardProps) {
           <div className="flex items-center gap-2 text-sm">
             <CreditCard className="h-4 w-4 text-gray-400" />
             <span className="text-gray-600">Cost:</span>
-            <span className="font-medium text-green-600">
-              ${flight.cost.toFixed(2)}
+            <span className="font-medium text-gray-900">
+              $
+              {flight.cost.toLocaleString("en-US", {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 2,
+              })}
             </span>
           </div>
         )}

@@ -16,12 +16,14 @@ export interface TransformedLocation {
 
 export default function GlobePage() {
   const globeRef = useRef<GlobeMethods | undefined>(undefined);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [visitedCountries, setVisitedCountries] = useState<Set<string>>(
     new Set()
   );
   const [locations, setLocations] = useState<TransformedLocation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [globeLoaded, setGlobeLoaded] = useState(false);
+  const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
 
   const pointsData = useMemo(() => {
     if (!locations?.length) return [];
@@ -76,21 +78,40 @@ export default function GlobePage() {
     }
   }, [globeLoaded]);
 
+  // Update dimensions on window resize
+  useEffect(() => {
+    const updateDimensions = () => {
+      if (containerRef.current) {
+        const width = containerRef.current.offsetWidth;
+        const height = Math.min(width * 0.75, 600); // Maintain aspect ratio, max 600px
+        setDimensions({ width, height });
+      }
+    };
+
+    updateDimensions();
+    window.addEventListener("resize", updateDimensions);
+    return () => window.removeEventListener("resize", updateDimensions);
+  }, []);
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
-      <div className="container mx-auto px-4 py-12">
+      <div className="container mx-auto px-4 py-6 md:py-12">
         <div className="max-w-7xl mx-auto">
-          <h1 className="text-center text-4xl font-bold mb-12">
+          <h1 className="text-center text-2xl md:text-4xl font-bold mb-6 md:mb-12">
             Your Travel Journey
           </h1>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8 items-start">
             <div className="lg:col-span-2 bg-white rounded-xl shadow-lg overflow-hidden">
-              <div className="p-6">
-                <h2 className="text-2xl font-semibold mb-4">
+              <div className="p-4 md:p-6">
+                <h2 className="text-xl md:text-2xl font-semibold mb-4">
                   See where you&apos;ve been...
                 </h2>
-                <div className="h-[600px] w-full relative">
+                <div 
+                  ref={containerRef}
+                  className="w-full relative"
+                  style={{ height: `${dimensions.height}px` }}
+                >
                   {isLoading ? (
                     <div className="flex items-center justify-center h-full">
                       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
@@ -108,8 +129,8 @@ export default function GlobePage() {
                       pointRadius={0.5}
                       pointAltitude={0.1}
                       pointsMerge={true}
-                      width={800}
-                      height={600}
+                      width={dimensions.width}
+                      height={dimensions.height}
                     />
                   )}
                 </div>
@@ -117,8 +138,8 @@ export default function GlobePage() {
             </div>
 
             <div className="lg:col-span-1">
-              <Card className="sticky top-8">
-                <CardHeader className="text-2xl font-semibold">
+              <Card className="lg:sticky lg:top-8">
+                <CardHeader className="text-xl md:text-2xl font-semibold">
                   <h2>Your Travel Stats</h2>
                 </CardHeader>
                 <CardContent>
@@ -137,7 +158,7 @@ export default function GlobePage() {
                           countries.
                         </p>
                       </div>
-                      <div className="space-y-2 max-h-[500px] overflow-y-auto pr-2">
+                      <div className="space-y-2 max-h-[400px] md:max-h-[500px] overflow-y-auto pr-2">
                         {Array.from(visitedCountries)
                           .sort()
                           .map((country) => (

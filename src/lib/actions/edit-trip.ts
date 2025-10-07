@@ -15,6 +15,7 @@ export async function editTrip(tripId: string, formData: FormData) {
   const startDateStr = formData.get("startDate")?.toString();
   const endDateStr = formData.get("endDate")?.toString();
   const imageUrl = formData.get("imageUrl")?.toString();
+  const budgetStr = formData.get("budget")?.toString();
 
   if (!title || !startDateStr || !endDateStr) {
     throw new Error("Missing required fields");
@@ -30,6 +31,13 @@ export async function editTrip(tripId: string, formData: FormData) {
     throw new Error("Start date must be before end date");
   }
 
+  // Parse budget if provided
+  const budget =
+    budgetStr && budgetStr.trim() !== "" ? parseFloat(budgetStr) : null;
+  if (budget !== null && (isNaN(budget) || budget < 0)) {
+    throw new Error("Invalid budget amount");
+  }
+
   await prisma.trip.updateMany({
     where: {
       id: tripId,
@@ -41,6 +49,7 @@ export async function editTrip(tripId: string, formData: FormData) {
       startDate,
       endDate,
       imageUrl,
+      budget,
     },
   });
 

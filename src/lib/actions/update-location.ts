@@ -60,6 +60,16 @@ export async function updateLocation(
   // Get optional notes field
   const notes = formData.get("notes")?.toString() || null;
 
+  // Get optional cost and category fields
+  const costStr = formData.get("cost")?.toString();
+  const category = formData.get("category")?.toString() || null;
+
+  // Parse cost if provided
+  const cost = costStr && costStr.trim() !== "" ? parseFloat(costStr) : null;
+  if (cost !== null && (isNaN(cost) || cost < 0)) {
+    throw new Error("Invalid cost amount");
+  }
+
   // Update the location
   await prisma.location.update({
     where: { id: locationId },
@@ -69,6 +79,8 @@ export async function updateLocation(
       endTime,
       duration,
       notes,
+      cost,
+      category,
     },
   });
 

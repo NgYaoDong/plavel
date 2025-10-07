@@ -67,6 +67,16 @@ export async function addLocation(formData: FormData, tripId: string) {
   // Get optional notes field
   const notes = formData.get("notes")?.toString() || null;
 
+  // Get optional cost and category fields
+  const costStr = formData.get("cost")?.toString();
+  const category = formData.get("category")?.toString() || null;
+
+  // Parse cost if provided
+  const cost = costStr && costStr.trim() !== "" ? parseFloat(costStr) : null;
+  if (cost !== null && (isNaN(cost) || cost < 0)) {
+    throw new Error("Invalid cost amount");
+  }
+
   // Try to use precise lat/lng from Places autocomplete if provided
   const formLat = formData.get("lat")?.toString();
   const formLng = formData.get("lng")?.toString();
@@ -143,6 +153,8 @@ export async function addLocation(formData: FormData, tripId: string) {
       endTime,
       duration,
       notes,
+      cost,
+      category,
     },
   });
 

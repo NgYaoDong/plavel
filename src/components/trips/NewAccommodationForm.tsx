@@ -55,9 +55,10 @@ export default function NewAccommodationForm({
 
   if (!isOpen) {
     return (
-      <Button onClick={() => setIsOpen(true)} className="w-auto">
+      <Button onClick={() => setIsOpen(true)} className="w-auto whitespace-nowrap text-sm sm:text-base">
         <Plus className="h-4 w-4" />
-        Add Accommodation
+        <span className="hidden md:inline">Add Accommodation</span>
+        <span className="md:hidden">Add</span>
       </Button>
     );
   }

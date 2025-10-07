@@ -23,7 +23,13 @@ import { reorderItinerary } from "@/lib/actions/reorder-itinerary";
 import { updateLocationDay } from "@/lib/actions/update-location-day";
 import RemoveLocationDialog from "./RemoveLocationDialog";
 import EditLocationForm from "./EditLocationForm";
-import { GripVertical, Clock, FileText, ExternalLink } from "lucide-react";
+import {
+  GripVertical,
+  Clock,
+  FileText,
+  ExternalLink,
+  DollarSign,
+} from "lucide-react";
 
 // Helper function to format time
 function formatTime(date: Date | null | undefined): string {
@@ -169,6 +175,45 @@ function SortableItem({
             <div className="flex items-start gap-2 text-sm">
               <FileText className="h-4 w-4 text-gray-400 flex-shrink-0 mt-0.5" />
               <p className="text-gray-600 whitespace-pre-wrap">{item.notes}</p>
+            </div>
+          </div>
+        )}
+
+        {/* Cost and Category Display */}
+        {(item.cost || item.category) && (
+          <div className="mt-2 pt-2 border-t border-gray-100">
+            <div className="flex items-center gap-3 flex-wrap text-sm">
+              {item.cost && (
+                <div className="flex items-center gap-1 text-gray-700">
+                  <DollarSign className="h-4 w-4 text-gray-400" />
+                  <span className="font-medium">
+                    $
+                    {item.cost.toLocaleString("en-US", {
+                      minimumFractionDigits: 0,
+                      maximumFractionDigits: 2,
+                    })}
+                  </span>
+                </div>
+              )}
+              {item.category && (
+                <span
+                  className={`px-3 py-1 rounded-full text-xs font-medium border capitalize min-w-[110px] text-center ${
+                    item.category === "food"
+                      ? "bg-orange-100 text-orange-700 border-orange-200"
+                      : item.category === "transport"
+                      ? "bg-blue-100 text-blue-700 border-blue-200"
+                      : item.category === "activity"
+                      ? "bg-green-100 text-green-700 border-green-200"
+                      : item.category === "shopping"
+                      ? "bg-purple-100 text-purple-700 border-purple-200"
+                      : item.category === "entertainment"
+                      ? "bg-pink-100 text-pink-700 border-pink-200"
+                      : "bg-gray-100 text-gray-700 border-gray-200"
+                  }`}
+                >
+                  {item.category.replace("_", " ")}
+                </span>
+              )}
             </div>
           </div>
         )}

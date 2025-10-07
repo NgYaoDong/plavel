@@ -75,12 +75,14 @@ model Trip {
   imageUrl    String?
   startDate   DateTime
   endDate     DateTime
+  budget      Float? // Total budget for the trip
   userId      String
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   locations      Location[]
   accommodations Accommodation[]
   flights        Flight[]
+  expenses       Expense[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -89,14 +91,16 @@ model Trip {
 model Location {
   id            String    @id @default(cuid())
   locationTitle String
-  address       String?   // Full formatted address
+  address       String? // Full formatted address
   latitude      Float
   longitude     Float
   day           Int       @default(1) // Which day of the trip this location belongs to
   startTime     DateTime? // When to visit this location
   endTime       DateTime? // When to leave this location
-  duration      Int?      // Duration in minutes (auto-calculated or manual)
-  notes         String?   // Notes about this location (activities, tips, etc.)
+  duration      Int? // Duration in minutes (auto-calculated or manual)
+  notes         String? // Notes about this location (activities, tips, etc.)
+  cost          Float? // Cost for this location/activity
+  category      String? // Category: food, transport, activity, shopping, etc.
   tripId        String
   trip          Trip      @relation(fields: [tripId], references: [id], onDelete: Cascade)
   order         Int       @default(0)
@@ -136,6 +140,18 @@ model Flight {
   notes            String? // Additional notes
   tripId           String
   trip             Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Expense {
+  id          String @id @default(cuid())
+  description String // Description of the expense
+  amount      Float // Cost of the expense
+  category    String // Category: food, transport, activity, shopping, entertainment, other
+  tripId      String
+  trip        Trip   @relation(fields: [tripId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

@@ -4,6 +4,8 @@ import { loginWithGitHub, loginWithGoogle, logout } from "@/lib/auth-actions";
 import { Session } from "next-auth";
 import Image from "next/image";
 import Link from "next/link";
+import { Menu, X } from "lucide-react";
+import { useState } from "react";
 
 const GitHubIcon = () => (
   <svg
@@ -46,66 +48,124 @@ const GoogleIcon = () => (
 );
 
 export default function NavBar({ session }: { session: Session | null }) {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
   return (
     <nav className="bg-white shadow-md py-4 border-b border-gray-200">
-      <div className="container mx-auto px-6 lg:px-8 flex justify-between items-center">
-        <Link href="/">
-          <Image
-            src="/plavel_colourful.svg"
-            alt="Logo"
-            width={50}
-            height={50}
-          />
-        </Link>
-        <div className="flex-1 text-left px-5 text-gray-700">
-          Plan your travel, with{" "}
-          <span className="font-bold text-gray-600">Plavel.</span>
-        </div>
+      <div className="container mx-auto px-4 md:px-6 lg:px-8">
+        <div className="flex justify-between items-center">
+          {/* Logo */}
+          <Link href="/" className="flex items-center">
+            <Image
+              src="/plavel_colourful.svg"
+              alt="Logo"
+              width={50}
+              height={50}
+              className="w-10 h-10 md:w-12 md:h-12"
+            />
+          </Link>
 
-        <div className="flex items-center space-x-4">
-          {session ? (
-            <>
-              <Link
-                href={"/trips"}
-                className="text-slate-900 hover:text-sky-500"
-              >
-                My Trips
-              </Link>
-              <Link
-                href={"/globe"}
-                className="text-slate-900 hover:text-sky-500"
-              >
-                Globe
-              </Link>
+          {/* Tagline - Hidden on mobile */}
+          <div className="hidden md:flex flex-1 text-left px-5 text-gray-700 text-sm lg:text-base">
+            Plan your travel, with{" "}
+            <span className="ml-1 font-bold text-gray-600">Plavel</span>.
+          </div>
+
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center space-x-4">
+            {session ? (
+              <>
+                <Link
+                  href={"/trips"}
+                  className="text-slate-900 hover:text-sky-500 text-sm lg:text-base"
+                >
+                  My Trips
+                </Link>
+                <Link
+                  href={"/globe"}
+                  className="text-slate-900 hover:text-sky-500 text-sm lg:text-base"
+                >
+                  Globe
+                </Link>
+                <button
+                  className="flex items-center justify-center bg-gray-800 text-white px-3 lg:px-4 py-2 rounded hover:bg-gray-900 hover:shadow-lg transition cursor-pointer text-sm lg:text-base"
+                  onClick={logout}
+                  aria-label="Sign out"
+                >
+                  Sign out
+                </button>
+              </>
+            ) : (
               <button
-                className="flex items-center justify-center bg-gray-800 text-white px-4 py-2 rounded hover:bg-gray-900 hover:shadow-lg transition cursor-pointer"
-                onClick={logout}
-                aria-label="Sign out"
-              >
-                Sign out
-              </button>
-            </>
-          ) : (
-            <>
-              <button
-                className="flex items-center justify-center bg-sky-500 text-white px-4 py-2 rounded hover:bg-sky-600 hover:shadow-lg transition cursor-pointer"
+                className="flex items-center justify-center bg-sky-500 text-white px-3 lg:px-4 py-2 rounded hover:bg-sky-600 hover:shadow-lg transition cursor-pointer text-sm lg:text-base"
                 onClick={loginWithGoogle}
                 aria-label="Sign in with Google"
               >
                 <GoogleIcon />
                 Sign in
               </button>
-              {/* <button
-                className="flex items-center justify-center bg-gray-800 text-white px-4 py-2 rounded hover:bg-gray-900 hover:shadow-lg transition cursor-pointer"
-                onClick={loginWithGitHub}
-                aria-label="Sign in with GitHub"
-              >
-                <GitHubIcon />
-                Sign in
-              </button> */}
-            </>
-          )}
+            )}
+          </div>
+
+          {/* Mobile Menu Button */}
+          <button
+            className="md:hidden p-2 text-gray-700 hover:text-sky-500"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            aria-label="Toggle menu"
+          >
+            {isMobileMenuOpen ? (
+              <X className="w-6 h-6" />
+            ) : (
+              <Menu className="w-6 h-6" />
+            )}
+          </button>
         </div>
+
+        {/* Mobile Menu */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden mt-4 pb-4 border-t border-gray-200 pt-4 space-y-3">
+            {session ? (
+              <>
+                <Link
+                  href={"/trips"}
+                  className="block text-slate-900 hover:text-sky-500 py-2"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  My Trips
+                </Link>
+                <Link
+                  href={"/globe"}
+                  className="block text-slate-900 hover:text-sky-500 py-2"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Globe
+                </Link>
+                <button
+                  className="w-full flex items-center justify-center bg-gray-800 text-white px-4 py-2 rounded hover:bg-gray-900 transition"
+                  onClick={() => {
+                    logout();
+                    setIsMobileMenuOpen(false);
+                  }}
+                  aria-label="Sign out"
+                >
+                  Sign out
+                </button>
+              </>
+            ) : (
+              <button
+                className="w-full flex items-center justify-center bg-sky-500 text-white px-4 py-2 rounded hover:bg-sky-600 transition"
+                onClick={() => {
+                  loginWithGoogle();
+                  setIsMobileMenuOpen(false);
+                }}
+                aria-label="Sign in with Google"
+              >
+                <GoogleIcon />
+                Sign in
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </nav>
   );

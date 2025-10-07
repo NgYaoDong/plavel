@@ -110,6 +110,35 @@ export default function EditTripForm({ trip }: { trip: Trip }) {
             </div>
 
             <div>
+              <label
+                htmlFor="budget"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Budget (Optional)
+              </label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+                  $
+                </span>
+                <input
+                  type="number"
+                  name="budget"
+                  placeholder="0"
+                  min="0"
+                  step="0.01"
+                  defaultValue={trip.budget || ""}
+                  className={cn(
+                    "w-full border border-gray-300 rounded-md pl-8 pr-3 py-2",
+                    "focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent"
+                  )}
+                />
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                Set a budget to track expenses throughout your trip
+              </p>
+            </div>
+
+            <div>
               <label>Trip Image</label>
               {(imageUrl || trip.imageUrl) && (
                 <Image

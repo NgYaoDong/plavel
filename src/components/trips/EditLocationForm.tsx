@@ -3,7 +3,7 @@
 import { Location } from "@/generated/prisma";
 import { useState, useTransition } from "react";
 import { Button } from "../ui/button";
-import { Pencil, X, FileText } from "lucide-react";
+import { Pencil, X, FileText, DollarSign } from "lucide-react";
 import { updateLocation } from "@/lib/actions/update-location";
 import TimeSlotPicker from "./TimeSlotPicker";
 
@@ -30,6 +30,10 @@ export default function EditLocationForm({
       : ""
   );
   const [notes, setNotes] = useState<string>(location.notes || "");
+  const [cost, setCost] = useState<string>(
+    location.cost ? location.cost.toString() : ""
+  );
+  const [category, setCategory] = useState<string>(location.category || "");
   const [error, setError] = useState<string>("");
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -132,6 +136,61 @@ export default function EditLocationForm({
                 placeholder="Add notes about this location (e.g., activities to do, tips, reservations, etc.)"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
               />
+            </div>
+
+            {/* Cost and Category */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label
+                  htmlFor="cost"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
+                  <div className="flex items-center gap-1">
+                    <DollarSign className="h-4 w-4" />
+                    <span>Cost (Optional)</span>
+                  </div>
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+                    $
+                  </span>
+                  <input
+                    type="number"
+                    id="cost"
+                    name="cost"
+                    value={cost}
+                    onChange={(e) => setCost(e.target.value)}
+                    placeholder="0"
+                    min="0"
+                    step="0.01"
+                    className="w-full border border-gray-300 rounded-lg pl-8 pr-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label
+                  htmlFor="category"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
+                  Category (Optional)
+                </label>
+                <select
+                  id="category"
+                  name="category"
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="">Select a category</option>
+                  <option value="food">Food & Dining</option>
+                  <option value="transport">Transport</option>
+                  <option value="activity">Activity</option>
+                  <option value="shopping">Shopping</option>
+                  <option value="entertainment">Entertainment</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
             </div>
 
             {/* Error Message */}
