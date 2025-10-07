@@ -15,11 +15,13 @@ import DeleteAccommodationDialog from "./DeleteAccommodationDialog";
 interface AccommodationCardProps {
   accommodation: Accommodation;
   tripId: string;
+  canEdit: boolean;
 }
 
 export default function AccommodationCard({
   accommodation,
   tripId,
+  canEdit,
 }: AccommodationCardProps) {
   const formatDate = (date: Date) => {
     return new Date(date).toLocaleDateString("en-SG", {
@@ -60,17 +62,19 @@ export default function AccommodationCard({
             )}
           </div>
         </div>
-        <div className="flex gap-1">
-          <EditAccommodationForm
-            accommodation={accommodation}
-            tripId={tripId}
-          />
-          <DeleteAccommodationDialog
-            accommodationId={accommodation.id}
-            accommodationName={accommodation.name}
-            tripId={tripId}
-          />
-        </div>
+        {canEdit && (
+          <div className="flex gap-1">
+            <EditAccommodationForm
+              accommodation={accommodation}
+              tripId={tripId}
+            />
+            <DeleteAccommodationDialog
+              accommodationId={accommodation.id}
+              accommodationName={accommodation.name}
+              tripId={tripId}
+            />
+          </div>
+        )}
       </div>
 
       <div className="space-y-2 text-sm">

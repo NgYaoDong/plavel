@@ -3,6 +3,7 @@
 import { auth } from "@/auth";
 import { prisma } from "../prisma";
 import { revalidatePath } from "next/cache";
+import { canEditTrip } from "@/lib/trip-permissions";
 
 export async function updateLocation(
   formData: FormData,
@@ -14,14 +15,20 @@ export async function updateLocation(
     throw new Error("Not authenticated");
   }
 
-  // Verify the location belongs to a trip owned by this user
+  // Check if user has permission to edit this trip (editor, admin, or owner)
+  const canEdit = await canEditTrip(tripId, session.user.id);
+  if (!canEdit) {
+    throw new Error("Not authorized to update this location");
+  }
+
+  // Verify the location belongs to this trip
   const location = await prisma.location.findUnique({
     where: { id: locationId },
-    include: { trip: true },
+    select: { id: true, tripId: true },
   });
 
-  if (!location || location.trip.userId !== session.user.id) {
-    throw new Error("Not authorized to update this location");
+  if (!location || location.tripId !== tripId) {
+    throw new Error("Location not found or doesn't belong to this trip");
   }
 
   const locationTitle = formData.get("locationTitle")?.toString();

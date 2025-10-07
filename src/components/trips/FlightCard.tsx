@@ -17,9 +17,10 @@ import DeleteFlightDialog from "./DeleteFlightDialog";
 interface FlightCardProps {
   flight: Flight;
   tripId: string;
+  canEdit: boolean;
 }
 
-export default function FlightCard({ flight, tripId }: FlightCardProps) {
+export default function FlightCard({ flight, tripId, canEdit }: FlightCardProps) {
   const formatDateTime = (date: Date) => {
     return new Date(date).toLocaleString("en-sg", {
       month: "short",
@@ -59,15 +60,17 @@ export default function FlightCard({ flight, tripId }: FlightCardProps) {
             </a>
           </div>
         </div>
-        <div className="flex gap-1">
-          <EditFlightForm flight={flight} tripId={tripId} />
-          <DeleteFlightDialog
-            flightId={flight.id}
-            flightNumber={flight.flightNumber}
-            airline={flight.airline}
-            tripId={tripId}
-          />
-        </div>
+        {canEdit && (
+          <div className="flex gap-1">
+            <EditFlightForm flight={flight} tripId={tripId} />
+            <DeleteFlightDialog
+              flightId={flight.id}
+              flightNumber={flight.flightNumber}
+              airline={flight.airline}
+              tripId={tripId}
+            />
+          </div>
+        )}
       </div>
 
       {/* Route */}

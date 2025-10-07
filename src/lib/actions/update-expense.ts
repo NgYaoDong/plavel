@@ -3,6 +3,7 @@
 import { auth } from "@/auth";
 import { prisma } from "../prisma";
 import { revalidatePath } from "next/cache";
+import { canEditTrip } from "@/lib/trip-permissions";
 
 export async function updateExpense(
   formData: FormData,
@@ -14,14 +15,20 @@ export async function updateExpense(
     throw new Error("Not authenticated");
   }
 
-  // Verify the expense belongs to a trip owned by this user
+  // Check if user has permission to edit this trip (editor, admin, or owner)
+  const canEdit = await canEditTrip(tripId, session.user.id);
+  if (!canEdit) {
+    throw new Error("Not authorized to update this expense");
+  }
+
+  // Verify the expense belongs to this trip
   const expense = await prisma.expense.findUnique({
     where: { id: expenseId },
-    include: { trip: true },
+    select: { id: true, tripId: true },
   });
 
-  if (!expense || expense.trip.userId !== session.user.id) {
-    throw new Error("Not authorized to update this expense");
+  if (!expense || expense.tripId !== tripId) {
+    throw new Error("Expense not found or doesn't belong to this trip");
   }
 
   const description = formData.get("description")?.toString();

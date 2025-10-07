@@ -3,6 +3,7 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
+import { isTripOwner } from "@/lib/trip-permissions";
 
 export async function deleteTrip(tripId: string) {
   const session = await auth();
@@ -10,21 +11,13 @@ export async function deleteTrip(tripId: string) {
     throw new Error("Not authenticated");
   }
 
-  // Verify the trip belongs to the user before deleting
-  const trip = await prisma.trip.findUnique({
-    where: { id: tripId },
-    select: { userId: true },
-  });
-
-  if (!trip) {
-    throw new Error("Trip not found");
+  // Only the owner can delete a trip
+  const isOwner = await isTripOwner(tripId, session.user.id);
+  if (!isOwner) {
+    throw new Error("Only the trip owner can delete this trip");
   }
 
-  if (trip.userId !== session.user.id) {
-    throw new Error("Unauthorized to delete this trip");
-  }
-
-  // Delete the trip (cascade will handle related locations)
+  // Delete the trip (cascade will handle related locations, shares, invites, etc.)
   await prisma.trip.delete({
     where: { id: tripId },
   });

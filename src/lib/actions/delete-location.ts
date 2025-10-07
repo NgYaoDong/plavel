@@ -3,6 +3,7 @@
 import { auth } from "@/auth";
 import { prisma } from "../prisma";
 import { revalidatePath } from "next/cache";
+import { canEditTrip } from "@/lib/trip-permissions";
 
 export async function deleteLocation(locationId: string, tripId: string) {
   const session = await auth();
@@ -10,13 +11,9 @@ export async function deleteLocation(locationId: string, tripId: string) {
     throw new Error("Not authenticated");
   }
 
-  // Verify the trip belongs to the user
-  const trip = await prisma.trip.findUnique({
-    where: { id: tripId },
-    select: { userId: true },
-  });
-
-  if (!trip || trip.userId !== session.user.id) {
+  // Check if user has permission to edit this trip (editor, admin, or owner)
+  const canEdit = await canEditTrip(tripId, session.user.id);
+  if (!canEdit) {
     throw new Error("Not authorized to delete this location");
   }
 

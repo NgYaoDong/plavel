@@ -2,11 +2,18 @@
 
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { canEditTrip } from "@/lib/trip-permissions";
 
 export async function reorderItinerary(tripId: string, newOrder: string[]) {
   const session = await auth();
   if (!session || !session.user || !session.user.id) {
     throw new Error("Not authenticated");
+  }
+
+  // Check if user has permission to edit this trip (editor, admin, or owner)
+  const canEdit = await canEditTrip(tripId, session.user.id);
+  if (!canEdit) {
+    throw new Error("Not authorized to reorder locations");
   }
 
   // Get all locations with their days

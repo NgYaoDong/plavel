@@ -3,6 +3,7 @@
 import { auth } from "@/auth";
 import { prisma } from "../prisma";
 import { revalidatePath } from "next/cache";
+import { canEditTrip } from "@/lib/trip-permissions";
 
 export async function updateLocationDay(
   locationId: string,
@@ -14,14 +15,20 @@ export async function updateLocationDay(
     throw new Error("Not authenticated");
   }
 
-  // Verify the trip belongs to the user
+  // Check if user has permission to edit this trip (editor, admin, or owner)
+  const canEdit = await canEditTrip(tripId, session.user.id);
+  if (!canEdit) {
+    throw new Error("Not authorized to update this location");
+  }
+
+  // Get the trip and its locations to calculate new order
   const trip = await prisma.trip.findUnique({
     where: { id: tripId },
-    select: { userId: true, locations: true },
+    select: { id: true, locations: true },
   });
 
-  if (!trip || trip.userId !== session.user.id) {
-    throw new Error("Not authorized to update this location");
+  if (!trip) {
+    throw new Error("Trip not found");
   }
 
   // Count how many locations are already in the target day

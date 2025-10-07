@@ -3,11 +3,18 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
+import { canEditTrip } from "@/lib/trip-permissions";
 
 export async function editTrip(tripId: string, formData: FormData) {
   const session = await auth();
   if (!session || !session.user || !session.user.id) {
     throw new Error("Not authenticated");
+  }
+
+  // Check if user has permission to edit (editor, admin, or owner)
+  const canEdit = await canEditTrip(tripId, session.user.id);
+  if (!canEdit) {
+    throw new Error("You don't have permission to edit this trip");
   }
 
   const title = formData.get("title")?.toString();
@@ -38,10 +45,10 @@ export async function editTrip(tripId: string, formData: FormData) {
     throw new Error("Invalid budget amount");
   }
 
-  await prisma.trip.updateMany({
+  // Update trip without userId check since we use permission system
+  await prisma.trip.update({
     where: {
       id: tripId,
-      userId: session.user.id,
     },
     data: {
       title,

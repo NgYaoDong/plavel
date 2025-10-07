@@ -31,6 +31,13 @@ export async function addLocation(formData: FormData, tripId: string) {
     throw new Error("Not authenticated");
   }
 
+  // Check if user has permission to edit (editor, admin, or owner)
+  const { canEditTrip } = await import("@/lib/trip-permissions");
+  const canEdit = await canEditTrip(tripId, session.user.id);
+  if (!canEdit) {
+    throw new Error("You don't have permission to add locations to this trip");
+  }
+
   const address = formData.get("address")?.toString();
   if (!address) {
     throw new Error("Address is required");

@@ -17,19 +17,65 @@ export default async function TripsPage() {
     return <InvalidSession />;
   }
 
-  const trips = await prisma.trip.findMany({
-    where: {
-      userId: session?.user?.id,
-    },
-  });
+  // Fetch trips owned by user and trips shared with user
+  const [ownedTrips, sharedTrips] = await Promise.all([
+    prisma.trip.findMany({
+      where: {
+        userId: session.user.id,
+      },
+      orderBy: {
+        startDate: "desc",
+      },
+    }),
+    prisma.trip.findMany({
+      where: {
+        shares: {
+          some: {
+            userId: session.user.id,
+          },
+        },
+      },
+      include: {
+        user: {
+          select: {
+            name: true,
+          },
+        },
+        shares: {
+          where: {
+            userId: session.user.id,
+          },
+          select: {
+            role: true,
+          },
+        },
+      },
+      orderBy: {
+        startDate: "desc",
+      },
+    }),
+  ]);
 
-  const sortedTrips = [...trips].sort(
+  const allTrips = [
+    ...ownedTrips.map((trip) => ({
+      ...trip,
+      isOwner: true,
+      sharedBy: null,
+      role: "owner" as const,
+    })),
+    ...sharedTrips.map((trip) => ({
+      ...trip,
+      isOwner: false,
+      sharedBy: trip.user.name,
+      role: trip.shares[0]?.role || "viewer",
+    })),
+  ].sort(
     (a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime()
   );
 
   const today = new Date();
-  today.setHours(0, 0, 0, 0); // Set to the start of today
-  const upcomingTrips = sortedTrips.filter(
+  today.setHours(0, 0, 0, 0);
+  const upcomingTrips = allTrips.filter(
     (trip) => new Date(trip.startDate) >= today
   );
 
@@ -48,8 +94,8 @@ export default async function TripsPage() {
         </CardHeader>
         <CardContent>
           <p className="text-md text-gray-600">
-            You have {trips.length} trip
-            {trips.length === 1 ? "" : "s"} planned.{" "}
+            You have {allTrips.length} trip
+            {allTrips.length === 1 ? "" : "s"} planned.{" "}
             {upcomingTrips.length > 0
               ? `${upcomingTrips.length} upcoming trip${
                   upcomingTrips.length === 1 ? "" : "s"
@@ -64,7 +110,7 @@ export default async function TripsPage() {
           <CardTitle>Your Trips</CardTitle>
         </CardHeader>
         <CardContent className="px-6 py-1">
-          {trips.length === 0 ? (
+          {allTrips.length === 0 ? (
             <>
               <p className="-mt-2 mb-4 text-gray-600">
                 You haven&apos;t created any trips yet. Start planning your next
@@ -76,12 +122,24 @@ export default async function TripsPage() {
             </>
           ) : (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {sortedTrips.map((trip) => (
+              {allTrips.map((trip) => (
                 <div key={trip.id} className="h-full">
                   <Link href={`/trips/${trip.id}`}>
                     <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
-                      <CardHeader>
-                        <CardTitle>{trip.title}</CardTitle>
+                      <CardHeader className="pb-3">
+                        <CardTitle className="flex items-center justify-between">
+                          <span className="truncate">{trip.title}</span>
+                          {!trip.isOwner && (
+                            <span className="text-xs font-normal bg-blue-100 text-blue-700 px-2 py-1 rounded-full ml-2 shrink-0">
+                              Shared
+                            </span>
+                          )}
+                        </CardTitle>
+                        {!trip.isOwner && trip.sharedBy && (
+                          <p className="text-xs text-gray-500 mt-1">
+                            by {trip.sharedBy}
+                          </p>
+                        )}
                       </CardHeader>
                       <CardContent className="flex-1">
                         <p className="text-sm line-clamp-2">

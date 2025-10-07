@@ -3,6 +3,7 @@
 import { auth } from "@/auth";
 import { prisma } from "../prisma";
 import { revalidatePath } from "next/cache";
+import { canEditTrip } from "@/lib/trip-permissions";
 
 export async function updateFlight(
   flightId: string,
@@ -14,14 +15,20 @@ export async function updateFlight(
     throw new Error("Not authenticated");
   }
 
-  // Verify the flight belongs to a trip owned by the user
+  // Check if user has permission to edit this trip (editor, admin, or owner)
+  const canEdit = await canEditTrip(tripId, session.user.id);
+  if (!canEdit) {
+    throw new Error("Not authorized to update this flight");
+  }
+
+  // Verify the flight belongs to this trip
   const flight = await prisma.flight.findUnique({
     where: { id: flightId },
-    include: { trip: true },
+    select: { id: true, tripId: true },
   });
 
-  if (!flight || flight.trip.userId !== session.user.id) {
-    throw new Error("Not authorized to update this flight");
+  if (!flight || flight.tripId !== tripId) {
+    throw new Error("Flight not found or doesn't belong to this trip");
   }
 
   const airline = formData.get("airline")?.toString();

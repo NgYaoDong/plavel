@@ -8,13 +8,20 @@ import { UploadDropzone } from "@/lib/upload-thing";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
 
 export default function EditTripForm({ trip }: { trip: Trip }) {
   const [isPending, startTransition] = useTransition();
   const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const router = useRouter();
 
   return (
     <main className="max-w-lg mx-auto mt-10">
+      <Button variant="ghost" onClick={() => router.back()} className="mb-4">
+        <ArrowLeft className="h-4 w-4 mr-2" />
+        Back
+      </Button>
       <Card>
         <CardHeader className="text-3xl font-bold">Edit Trip</CardHeader>
         <CardContent>

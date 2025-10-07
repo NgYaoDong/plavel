@@ -19,9 +19,14 @@ const CATEGORY_COLORS = {
 interface ExpensesListProps {
   expenses: Expense[];
   tripId: string;
+  canEdit: boolean;
 }
 
-export default function ExpensesList({ expenses, tripId }: ExpensesListProps) {
+export default function ExpensesList({
+  expenses,
+  tripId,
+  canEdit,
+}: ExpensesListProps) {
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-US", {
       style: "currency",
@@ -44,9 +49,11 @@ export default function ExpensesList({ expenses, tripId }: ExpensesListProps) {
       <div className="border border-gray-200 rounded-lg p-8 bg-white text-center">
         <Receipt className="w-12 h-12 text-gray-300 mx-auto mb-3" />
         <p className="text-gray-500 mb-1">No manual expenses added yet</p>
-        <p className="text-sm text-gray-400">
-          Click &ldquo;Add Expense&rdquo; to track miscellaneous costs
-        </p>
+        {canEdit && (
+          <p className="text-sm text-gray-400">
+            Click &ldquo;Add Expense&rdquo; to track miscellaneous costs
+          </p>
+        )}
       </div>
     );
   }
@@ -67,6 +74,7 @@ export default function ExpensesList({ expenses, tripId }: ExpensesListProps) {
             tripId={tripId}
             formatCurrency={formatCurrency}
             formatDate={formatDate}
+            canEdit={canEdit}
           />
         ))}
       </div>
@@ -79,6 +87,7 @@ interface ExpenseCardProps {
   tripId: string;
   formatCurrency: (amount: number) => string;
   formatDate: (date: Date) => string;
+  canEdit: boolean;
 }
 
 function ExpenseCard({
@@ -86,6 +95,7 @@ function ExpenseCard({
   tripId,
   formatCurrency,
   formatDate,
+  canEdit,
 }: ExpenseCardProps) {
   const [isPending, startTransition] = useTransition();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -104,7 +114,9 @@ function ExpenseCard({
     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
       <div className="flex-1 min-w-0 w-full sm:w-auto">
         <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-1">
-          <h4 className="font-medium text-gray-900 break-words">{expense.description}</h4>
+          <h4 className="font-medium text-gray-900 break-words">
+            {expense.description}
+          </h4>
           <span
             className={`px-3 py-1 rounded-full text-xs font-medium border capitalize min-w-[110px] text-center ${colorClass} w-fit`}
           >
@@ -119,39 +131,43 @@ function ExpenseCard({
         </div>
       </div>
 
-      {!showDeleteConfirm ? (
-        <div className="flex gap-1 self-end sm:self-center flex-shrink-0">
-          <EditExpenseForm expense={expense} tripId={tripId} />
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setShowDeleteConfirm(true)}
-            className="text-red-600 hover:text-red-700 hover:bg-red-50"
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        </div>
-      ) : (
-        <div className="flex gap-2 self-end sm:self-center flex-shrink-0">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setShowDeleteConfirm(false)}
-            disabled={isPending}
-            className="text-gray-600"
-          >
-            Cancel
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleDelete}
-            disabled={isPending}
-            className="text-red-600 hover:text-red-700 hover:bg-red-50"
-          >
-            {isPending ? "Deleting..." : "Delete"}
-          </Button>
-        </div>
+      {canEdit && (
+        <>
+          {!showDeleteConfirm ? (
+            <div className="flex gap-1 self-end sm:self-center flex-shrink-0">
+              <EditExpenseForm expense={expense} tripId={tripId} />
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowDeleteConfirm(true)}
+                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          ) : (
+            <div className="flex gap-2 self-end sm:self-center flex-shrink-0">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={isPending}
+                className="text-gray-600"
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleDelete}
+                disabled={isPending}
+                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+              >
+                {isPending ? "Deleting..." : "Delete"}
+              </Button>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

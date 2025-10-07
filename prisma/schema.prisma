@@ -22,7 +22,16 @@ model User {
   image         String?
   accounts      Account[]
   sessions      Session[]
-  trips         Trip[]
+  trips         Trip[]    @relation("OwnedTrips")
+
+  // Sharing relations
+  tripShares    TripShare[] @relation("UserShares")
+  invitesSent   TripShare[] @relation("InvitedBy")
+  invitations   TripInvite[]
+  
+  // Payment relations
+  payments      Payment[]
+  paymentSplits PaymentSplit[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -76,13 +85,22 @@ model Trip {
   startDate   DateTime
   endDate     DateTime
   budget      Float? // Total budget for the trip
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String // Owner of the trip
+  user        User     @relation("OwnedTrips", fields: [userId], references: [id], onDelete: Cascade)
 
   locations      Location[]
   accommodations Accommodation[]
   flights        Flight[]
   expenses       Expense[]
+
+  // Sharing fields
+  shares      TripShare[]
+  invites     TripInvite[]
+  isPublic    Boolean  @default(false)
+  shareToken  String?  @unique // For public read-only sharing
+  
+  // Payment tracking
+  payments    Payment[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -105,6 +123,9 @@ model Location {
   trip          Trip      @relation(fields: [tripId], references: [id], onDelete: Cascade)
   order         Int       @default(0)
 
+  // Link to payment tracking
+  payments      Payment[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -121,6 +142,9 @@ model Accommodation {
   notes              String?
   tripId             String
   trip               Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+
+  // Link to payment tracking
+  payment            Payment?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -141,6 +165,9 @@ model Flight {
   tripId           String
   trip             Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
 
+  // Link to payment tracking
+  payment          Payment?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -153,6 +180,86 @@ model Expense {
   tripId      String
   trip        Trip   @relation(fields: [tripId], references: [id], onDelete: Cascade)
 
+  // Link to payment tracking (if expense is paid by someone)
+  payment     Payment?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// Trip sharing model
+model TripShare {
+  id        String   @id @default(cuid())
+  tripId    String
+  trip      Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  userId    String // The user being given access
+  user      User     @relation("UserShares", fields: [userId], references: [id], onDelete: Cascade)
+  role      String   @default("viewer") // "viewer", "editor", "admin"
+  invitedBy String // User who sent the invite
+  inviter   User     @relation("InvitedBy", fields: [invitedBy], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([tripId, userId]) // One share per user per trip
+}
+
+// Trip invitation model (for email invites before user accepts)
+model TripInvite {
+  id        String   @id @default(cuid())
+  tripId    String
+  trip      Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  email     String
+  token     String   @unique @default(cuid())
+  role      String   @default("viewer") // "viewer", "editor"
+  invitedBy String
+  inviter   User     @relation(fields: [invitedBy], references: [id])
+  expiresAt DateTime
+  accepted  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([token])
+  @@index([email])
+}
+
+// Payment tracking model
+model Payment {
+  id          String   @id @default(cuid())
+  tripId      String
+  trip        Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  paidBy      String   // User who paid
+  payer       User     @relation(fields: [paidBy], references: [id])
+  amount      Float
+  currency    String   @default("USD")
+  description String
+  category    String?  // "accommodation", "flight", "food", "transport", etc.
+
+  // What this payment is linked to (optional)
+  expenseId        String?        @unique
+  expense          Expense?       @relation(fields: [expenseId], references: [id])
+  accommodationId  String?        @unique
+  accommodation    Accommodation? @relation(fields: [accommodationId], references: [id])
+  flightId         String?        @unique
+  flight           Flight?        @relation(fields: [flightId], references: [id])
+  locationId       String?
+  location         Location?      @relation(fields: [locationId], references: [id])
+
+  // Split info
+  splitType   String         @default("equal") // "equal", "custom", "percentage"
+  splits      PaymentSplit[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Payment split model (who owes what portion of a payment)
+model PaymentSplit {
+  id        String    @id @default(cuid())
+  paymentId String
+  payment   Payment   @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User      @relation(fields: [userId], references: [id])
+  amount    Float // Their share of the payment
+  settled   Boolean   @default(false)
+  settledAt DateTime?
+
+  @@unique([paymentId, userId])
 }

@@ -18,6 +18,7 @@ interface BudgetOverviewProps {
     flights: Flight[];
     expenses: Expense[];
   };
+  canEdit: boolean;
 }
 
 const CATEGORY_COLORS = {
@@ -29,7 +30,7 @@ const CATEGORY_COLORS = {
   other: "bg-gray-100 text-gray-700 border-gray-200",
 };
 
-export function BudgetOverview({ trip }: BudgetOverviewProps) {
+export function BudgetOverview({ trip, canEdit }: BudgetOverviewProps) {
   // Calculate total spending
   const locationCosts =
     trip.locations?.reduce((sum, loc) => sum + (loc.cost || 0), 0) || 0;
@@ -106,7 +107,7 @@ export function BudgetOverview({ trip }: BudgetOverviewProps) {
       {/* Add Expense Button */}
       <div className="flex justify-between items-center md:flex-row gap=4">
         <h2 className="text-2xl font-semibold">Budget</h2>
-        <AddExpenseForm tripId={trip.id} />
+        {canEdit && <AddExpenseForm tripId={trip.id} />}
       </div>
 
       {/* Budget Summary Card */}
@@ -209,9 +210,10 @@ export function BudgetOverview({ trip }: BudgetOverviewProps) {
                 category === "accommodations"
                   ? "bg-indigo-100 text-indigo-700 border-indigo-200"
                   : category === "flights"
-                  ? "bg-cyan-100 text-cyan-700 border-cyan-200"
-                  : CATEGORY_COLORS[category as keyof typeof CATEGORY_COLORS] ||
-                    CATEGORY_COLORS.other;
+                    ? "bg-cyan-100 text-cyan-700 border-cyan-200"
+                    : CATEGORY_COLORS[
+                        category as keyof typeof CATEGORY_COLORS
+                      ] || CATEGORY_COLORS.other;
 
               return (
                 <div key={category} className="flex items-center gap-3">
@@ -269,7 +271,11 @@ export function BudgetOverview({ trip }: BudgetOverviewProps) {
       </div>
 
       {/* Manual Expenses List */}
-      <ExpensesList expenses={trip.expenses || []} tripId={trip.id} />
+      <ExpensesList
+        expenses={trip.expenses || []}
+        tripId={trip.id}
+        canEdit={canEdit}
+      />
     </div>
   );
 }

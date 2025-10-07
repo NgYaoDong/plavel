@@ -20,6 +20,9 @@ import DeleteTripDialog from "@/components/trips/DeleteTripDialog";
 import AccommodationsList from "@/components/trips/AccommodationsList";
 import FlightsList from "@/components/trips/FlightsList";
 import { BudgetOverview } from "@/components/trips/BudgetOverview";
+import ShareTripDialog from "@/components/trips/ShareTripDialog";
+import { TripRole } from "@/lib/trip-permissions";
+import { useTripPolling } from "@/hooks/useTripPolling";
 
 type TripWithLocation = Trip & {
   locations: Location[];
@@ -28,8 +31,29 @@ type TripWithLocation = Trip & {
   expenses: Expense[];
 };
 
+interface Collaborator {
+  id: string;
+  name: string | null;
+  email: string;
+  image: string | null;
+  role: string;
+  shareId: string | null;
+}
+
+interface PendingInvite {
+  id: string;
+  email: string;
+  role: string;
+  createdAt: Date;
+}
+
 interface TripDetailClientProps {
   trip: TripWithLocation;
+  currentUserId: string;
+  userRole: TripRole;
+  isOwner: boolean;
+  collaborators: Collaborator[];
+  pendingInvites: PendingInvite[];
 }
 
 function getTripDays(trip: TripWithLocation) {
@@ -38,8 +62,29 @@ function getTripDays(trip: TripWithLocation) {
       (1000 * 60 * 60 * 24)
   );
 }
-export default function TripDetailClient({ trip }: TripDetailClientProps) {
+export default function TripDetailClient({
+  trip,
+  currentUserId,
+  userRole,
+  isOwner,
+  collaborators,
+  pendingInvites,
+}: TripDetailClientProps) {
   const [activeTab, setActiveTab] = useState("overview");
+
+  // Enable polling to auto-refresh and see collaborator changes
+  // Only poll if there are collaborators (shared trip)
+  const hasCollaborators =
+    collaborators.length > 1 || pendingInvites.length > 0;
+  // Poll every 10 seconds if shared, don't poll if not shared
+  useTripPolling(trip.id, hasCollaborators ? 10000 : 0);
+
+  // Check if user can edit (editor, admin, or owner)
+  const canEdit =
+    userRole === "editor" || userRole === "admin" || userRole === "owner";
+
+  // Check if user can manage sharing (admin or owner)
+  const canManageSharing = userRole === "admin" || userRole === "owner";
 
   // Derived ordered locations by day, then by order within each day
   const orderedLocations = useMemo(() => {
@@ -60,13 +105,32 @@ export default function TripDetailClient({ trip }: TripDetailClientProps) {
             <ArrowLeft /> Back
           </Button>
         </Link>
-        <div className="flex float-right items-center">
-          <Link href={`/trips/${trip.id}/edit`}>
-            <Button className="transition-shadow bg-sky-600 hover:bg-sky-700 mr-4">
-              <Edit2 /> Edit Trip
-            </Button>
-          </Link>
-          <DeleteTripDialog tripId={trip.id} tripTitle={trip.title} />
+        <div className="flex float-right items-center gap-2">
+          {/* Share Button - visible to admin and owner */}
+          {canManageSharing && (
+            <ShareTripDialog
+              tripId={trip.id}
+              collaborators={collaborators}
+              pendingInvites={pendingInvites}
+              currentUserId={currentUserId}
+              isOwner={isOwner}
+              canManageSharing={canManageSharing}
+            />
+          )}
+
+          {/* Edit Trip Button - visible to editors and above */}
+          {canEdit && (
+            <Link href={`/trips/${trip.id}/edit`}>
+              <Button className="transition-shadow bg-sky-600 hover:bg-sky-700">
+                <Edit2 /> <span className="hidden sm:inline">Edit Trip</span>
+              </Button>
+            </Link>
+          )}
+
+          {/* Delete Button - visible to owner only */}
+          {isOwner && (
+            <DeleteTripDialog tripId={trip.id} tripTitle={trip.title} />
+          )}
         </div>
       </div>
       {trip.imageUrl && (
@@ -183,13 +247,15 @@ export default function TripDetailClient({ trip }: TripDetailClientProps) {
                         No locations added yet. Start adding locations to go on
                         your trip!
                       </p>
-                      <div className="mt-2">
-                        <Link href={`/trips/${trip.id}/itinerary/new`}>
-                          <Button>
-                            <Plus /> Add Location
-                          </Button>
-                        </Link>
-                      </div>
+                      {canEdit && (
+                        <div className="mt-2">
+                          <Link href={`/trips/${trip.id}/itinerary/new`}>
+                            <Button>
+                              <Plus /> Add Location
+                            </Button>
+                          </Link>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ) : (
@@ -202,25 +268,29 @@ export default function TripDetailClient({ trip }: TripDetailClientProps) {
           <TabsContent value="itinerary" className="space-y-6">
             <div className="flex md:flex-row justify-between gap-4">
               <h2 className="text-2xl font-semibold">Itinerary</h2>
-              <div className="w-auto">
-                <Link href={`/trips/${trip.id}/itinerary/new`}>
-                  <Button>
-                    <Plus /> Add Location
-                  </Button>
-                </Link>
-              </div>
-            </div>
-            {orderedLocations.length === 0 ? (
-              <div className="p-4 text-center text-gray-600 border border-dashed border-gray-300 rounded-lg py-12">
-                No locations added yet. Start adding locations to go on your
-                trip!
-                <div className="mt-4">
+              {canEdit && (
+                <div className="w-auto">
                   <Link href={`/trips/${trip.id}/itinerary/new`}>
                     <Button>
                       <Plus /> Add Location
                     </Button>
                   </Link>
                 </div>
+              )}
+            </div>
+            {orderedLocations.length === 0 ? (
+              <div className="p-4 text-center text-gray-600 border border-dashed border-gray-300 rounded-lg py-12">
+                No locations added yet.
+                {canEdit ? " Start adding locations to go on your trip!" : ""}
+                {canEdit && (
+                  <div className="mt-4">
+                    <Link href={`/trips/${trip.id}/itinerary/new`}>
+                      <Button>
+                        <Plus /> Add Location
+                      </Button>
+                    </Link>
+                  </div>
+                )}
               </div>
             ) : (
               <SortableItinerary
@@ -236,15 +306,20 @@ export default function TripDetailClient({ trip }: TripDetailClientProps) {
             <AccommodationsList
               accommodations={trip.accommodations}
               tripId={trip.id}
+              canEdit={canEdit}
             />
           </TabsContent>
 
           <TabsContent value="flights" className="space-y-6">
-            <FlightsList flights={trip.flights} tripId={trip.id} />
+            <FlightsList
+              flights={trip.flights}
+              tripId={trip.id}
+              canEdit={canEdit}
+            />
           </TabsContent>
 
           <TabsContent value="budget" className="space-y-6">
-            <BudgetOverview trip={trip} />
+            <BudgetOverview trip={trip} canEdit={canEdit} />
           </TabsContent>
 
           <TabsContent value="map" className="space-y-6">
