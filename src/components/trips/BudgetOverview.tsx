@@ -11,6 +11,15 @@ import type {
 import AddExpenseForm from "./AddExpenseForm";
 import ExpensesList from "./ExpensesList";
 
+interface Collaborator {
+  id: string;
+  name: string | null;
+  email: string;
+  image: string | null;
+  role: string;
+  shareId: string | null;
+}
+
 interface BudgetOverviewProps {
   trip: Trip & {
     locations: Location[];
@@ -19,6 +28,8 @@ interface BudgetOverviewProps {
     expenses: Expense[];
   };
   canEdit: boolean;
+  currentUserId: string;
+  collaborators: Collaborator[];
 }
 
 const CATEGORY_COLORS = {
@@ -30,7 +41,12 @@ const CATEGORY_COLORS = {
   other: "bg-gray-100 text-gray-700 border-gray-200",
 };
 
-export function BudgetOverview({ trip, canEdit }: BudgetOverviewProps) {
+export function BudgetOverview({
+  trip,
+  canEdit,
+  currentUserId,
+  collaborators,
+}: BudgetOverviewProps) {
   // Calculate total spending
   const locationCosts =
     trip.locations?.reduce((sum, loc) => sum + (loc.cost || 0), 0) || 0;
@@ -96,7 +112,7 @@ export function BudgetOverview({ trip, canEdit }: BudgetOverviewProps) {
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-US", {
       style: "currency",
-      currency: "USD",
+      currency: "SGD",
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(amount);
@@ -107,7 +123,13 @@ export function BudgetOverview({ trip, canEdit }: BudgetOverviewProps) {
       {/* Add Expense Button */}
       <div className="flex justify-between items-center md:flex-row gap=4">
         <h2 className="text-2xl font-semibold">Budget</h2>
-        {canEdit && <AddExpenseForm tripId={trip.id} />}
+        {canEdit && (
+          <AddExpenseForm
+            tripId={trip.id}
+            currentUserId={currentUserId}
+            collaborators={collaborators}
+          />
+        )}
       </div>
 
       {/* Budget Summary Card */}
@@ -275,6 +297,8 @@ export function BudgetOverview({ trip, canEdit }: BudgetOverviewProps) {
         expenses={trip.expenses || []}
         tripId={trip.id}
         canEdit={canEdit}
+        currentUserId={currentUserId}
+        collaborators={collaborators}
       />
     </div>
   );

@@ -4,6 +4,8 @@ import { notFound, redirect } from "next/navigation";
 import InviteAcceptanceClient from "@/components/trips/InviteAcceptanceClient";
 import Link from "next/link";
 
+export const revalidate = 60;
+
 interface InvitePageProps {
   params: Promise<{ token: string }>;
 }

@@ -11,6 +11,8 @@ import InvalidSession from "@/lib/invalidSession";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 
+export const revalidate = 60;
+
 export default async function TripsPage() {
   const session = await auth();
   if (!session || !session?.user || !session.user?.id) {

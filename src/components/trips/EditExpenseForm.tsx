@@ -1,25 +1,52 @@
 "use client";
 
-import { Expense } from "@/generated/prisma";
+import { Expense, Payment } from "@/generated/prisma";
 import { useState, useTransition } from "react";
 import { Button } from "../ui/button";
-import { Pencil, X, DollarSign } from "lucide-react";
+import { Pencil, X, DollarSign, User as UserIcon } from "lucide-react";
 import { updateExpense } from "@/lib/actions/update-expense";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
+
+type ExpenseWithPayment = Expense & {
+  payment?: Payment | null;
+};
+
+interface Collaborator {
+  id: string;
+  name: string | null;
+  email: string;
+  image: string | null;
+  role: string;
+  shareId: string | null;
+}
 
 interface EditExpenseFormProps {
-  expense: Expense;
+  expense: ExpenseWithPayment;
   tripId: string;
+  currentUserId: string;
+  collaborators: Collaborator[];
 }
 
 export default function EditExpenseForm({
   expense,
   tripId,
+  currentUserId,
+  collaborators,
 }: EditExpenseFormProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [description, setDescription] = useState(expense.description);
   const [amount, setAmount] = useState(expense.amount.toString());
   const [category, setCategory] = useState(expense.category);
+  const [paidBy, setPaidBy] = useState(
+    expense.payment?.paidBy || currentUserId
+  );
   const [error, setError] = useState<string>("");
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -28,14 +55,14 @@ export default function EditExpenseForm({
 
     const formData = new FormData(e.currentTarget);
 
-    try {
-      startTransition(async () => {
-        await updateExpense(formData, expense.id, tripId);
+    startTransition(async () => {
+      try {
+        await updateExpense(formData, expense.id, tripId, paidBy);
         setIsOpen(false);
-      });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to update expense");
-    }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to update expense");
+      }
+    });
   };
 
   if (!isOpen) {
@@ -138,7 +165,7 @@ export default function EditExpenseForm({
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
               >
                 <option value="">Select a category</option>
                 <option value="food">Food & Dining</option>
@@ -148,6 +175,39 @@ export default function EditExpenseForm({
                 <option value="entertainment">Entertainment</option>
                 <option value="other">Other</option>
               </select>
+            </div>
+
+            {/* Paid By */}
+            <div>
+              <label
+                htmlFor="paidBy"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
+                <div className="flex items-center gap-1">
+                  <UserIcon className="h-4 w-4" />
+                  <span>
+                    Paid By<span className="text-red-500 px-0.5">*</span>
+                  </span>
+                </div>
+              </label>
+              <Select value={paidBy} onValueChange={setPaidBy}>
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {collaborators.map((collab) => (
+                    <SelectItem key={collab.id} value={collab.id}>
+                      {collab.name || collab.email}
+                      {collab.id === currentUserId && " (You)"}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-gray-500 mt-1">
+                {expense.payment
+                  ? "Updates the payment split equally among all trip members"
+                  : "Creates a payment split equally among all trip members"}
+              </p>
             </div>
 
             {/* Error Message */}

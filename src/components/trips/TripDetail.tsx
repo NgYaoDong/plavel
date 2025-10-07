@@ -6,6 +6,9 @@ import {
   Accommodation,
   Flight,
   Expense,
+  Payment,
+  PaymentSplit,
+  User,
 } from "@/generated/prisma";
 import Image from "next/image";
 import { ArrowLeft, Calendar, Edit2, MapPin, Plus } from "lucide-react";
@@ -23,12 +26,20 @@ import { BudgetOverview } from "@/components/trips/BudgetOverview";
 import ShareTripDialog from "@/components/trips/ShareTripDialog";
 import { TripRole } from "@/lib/trip-permissions";
 import { useTripPolling } from "@/hooks/useTripPolling";
+import PaymentsTab from "@/components/trips/PaymentsTab";
 
 type TripWithLocation = Trip & {
   locations: Location[];
   accommodations: Accommodation[];
   flights: Flight[];
   expenses: Expense[];
+};
+
+type PaymentWithRelations = Payment & {
+  payer: User;
+  splits: (PaymentSplit & {
+    user: User;
+  })[];
 };
 
 interface Collaborator {
@@ -54,6 +65,7 @@ interface TripDetailClientProps {
   isOwner: boolean;
   collaborators: Collaborator[];
   pendingInvites: PendingInvite[];
+  payments: PaymentWithRelations[];
 }
 
 function getTripDays(trip: TripWithLocation) {
@@ -69,6 +81,7 @@ export default function TripDetailClient({
   isOwner,
   collaborators,
   pendingInvites,
+  payments,
 }: TripDetailClientProps) {
   const [activeTab, setActiveTab] = useState("overview");
 
@@ -187,6 +200,9 @@ export default function TripDetailClient({
             </TabsTrigger>
             <TabsTrigger value="budget" className="text-sm md:text-lg">
               Budget
+            </TabsTrigger>
+            <TabsTrigger value="payments" className="text-sm md:text-lg">
+              Payments
             </TabsTrigger>
             <TabsTrigger value="map" className="text-sm md:text-lg">
               Map
@@ -319,7 +335,22 @@ export default function TripDetailClient({
           </TabsContent>
 
           <TabsContent value="budget" className="space-y-6">
-            <BudgetOverview trip={trip} canEdit={canEdit} />
+            <BudgetOverview
+              trip={trip}
+              canEdit={canEdit}
+              currentUserId={currentUserId}
+              collaborators={collaborators}
+            />
+          </TabsContent>
+
+          <TabsContent value="payments" className="space-y-6">
+            <PaymentsTab
+              trip={trip}
+              payments={payments}
+              currentUserId={currentUserId}
+              collaborators={collaborators}
+              canEdit={canEdit}
+            />
           </TabsContent>
 
           <TabsContent value="map" className="space-y-6">

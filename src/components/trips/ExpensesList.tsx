@@ -1,7 +1,7 @@
 "use client";
 
-import { Expense } from "@/generated/prisma";
-import { Receipt, Trash2 } from "lucide-react";
+import { Expense, Payment, User } from "@/generated/prisma";
+import { Receipt, Trash2, User as UserIcon } from "lucide-react";
 import { useState, useTransition } from "react";
 import { Button } from "../ui/button";
 import { deleteExpense } from "@/lib/actions/delete-expense";
@@ -16,21 +16,40 @@ const CATEGORY_COLORS = {
   other: "bg-gray-100 text-gray-700 border-gray-200",
 };
 
+interface Collaborator {
+  id: string;
+  name: string | null;
+  email: string;
+  image: string | null;
+  role: string;
+  shareId: string | null;
+}
+
+type ExpenseWithPayment = Expense & {
+  payment?: (Payment & {
+    payer: User;
+  }) | null;
+};
+
 interface ExpensesListProps {
-  expenses: Expense[];
+  expenses: ExpenseWithPayment[];
   tripId: string;
   canEdit: boolean;
+  currentUserId: string;
+  collaborators: Collaborator[];
 }
 
 export default function ExpensesList({
   expenses,
   tripId,
   canEdit,
+  currentUserId,
+  collaborators,
 }: ExpensesListProps) {
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-US", {
       style: "currency",
-      currency: "USD",
+      currency: "SGD",
       minimumFractionDigits: 0,
       maximumFractionDigits: 2,
     }).format(amount);
@@ -75,6 +94,8 @@ export default function ExpensesList({
             formatCurrency={formatCurrency}
             formatDate={formatDate}
             canEdit={canEdit}
+            currentUserId={currentUserId}
+            collaborators={collaborators}
           />
         ))}
       </div>
@@ -83,11 +104,13 @@ export default function ExpensesList({
 }
 
 interface ExpenseCardProps {
-  expense: Expense;
+  expense: ExpenseWithPayment;
   tripId: string;
   formatCurrency: (amount: number) => string;
   formatDate: (date: Date) => string;
   canEdit: boolean;
+  currentUserId: string;
+  collaborators: Collaborator[];
 }
 
 function ExpenseCard({
@@ -96,6 +119,8 @@ function ExpenseCard({
   formatCurrency,
   formatDate,
   canEdit,
+  currentUserId,
+  collaborators,
 }: ExpenseCardProps) {
   const [isPending, startTransition] = useTransition();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -128,6 +153,15 @@ function ExpenseCard({
           <span className="font-semibold text-gray-900">
             {formatCurrency(expense.amount)}
           </span>
+          {expense.payment?.payer && (
+            <span className="flex items-center gap-1 text-gray-600">
+              <UserIcon className="h-3.5 w-3.5" />
+              <span className="text-xs">
+                Paid by {expense.payment.payer.name || expense.payment.payer.email}
+                {expense.payment.payer.id === currentUserId && " (You)"}
+              </span>
+            </span>
+          )}
         </div>
       </div>
 
@@ -135,7 +169,12 @@ function ExpenseCard({
         <>
           {!showDeleteConfirm ? (
             <div className="flex gap-1 self-end sm:self-center flex-shrink-0">
-              <EditExpenseForm expense={expense} tripId={tripId} />
+              <EditExpenseForm
+                expense={expense}
+                tripId={tripId}
+                currentUserId={currentUserId}
+                collaborators={collaborators}
+              />
               <Button
                 variant="ghost"
                 size="sm"

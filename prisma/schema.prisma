@@ -228,7 +228,7 @@ model Payment {
   paidBy      String   // User who paid
   payer       User     @relation(fields: [paidBy], references: [id])
   amount      Float
-  currency    String   @default("USD")
+  currency    String   @default("SGD")
   description String
   category    String?  // "accommodation", "flight", "food", "transport", etc.
 

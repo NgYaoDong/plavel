@@ -8,7 +8,8 @@ import { canEditTrip } from "@/lib/trip-permissions";
 export async function updateExpense(
   formData: FormData,
   expenseId: string,
-  tripId: string
+  tripId: string,
+  paidBy?: string // Optional: user who paid for this expense
 ) {
   const session = await auth();
   if (!session || !session.user || !session.user.id) {
@@ -21,10 +22,18 @@ export async function updateExpense(
     throw new Error("Not authorized to update this expense");
   }
 
-  // Verify the expense belongs to this trip
+  // Verify the expense belongs to this trip and get existing payment
   const expense = await prisma.expense.findUnique({
     where: { id: expenseId },
-    select: { id: true, tripId: true },
+    select: {
+      id: true,
+      tripId: true,
+      payment: {
+        include: {
+          splits: true,
+        },
+      },
+    },
   });
 
   if (!expense || expense.tripId !== tripId) {
@@ -45,15 +54,117 @@ export async function updateExpense(
     throw new Error("Invalid amount");
   }
 
-  // Update the expense
-  await prisma.expense.update({
-    where: { id: expenseId },
-    data: {
-      description,
-      amount,
-      category,
-    },
-  });
+  // Handle payment updates
+  if (paidBy) {
+    // Get trip with collaborators
+    const trip = await prisma.trip.findUnique({
+      where: { id: tripId },
+      include: {
+        shares: {
+          include: {
+            user: true,
+          },
+        },
+      },
+    });
+
+    if (!trip) {
+      throw new Error("Trip not found");
+    }
+
+    // Build list of all trip members
+    const tripMemberIds = [
+      trip.userId,
+      ...trip.shares.map((share) => share.userId),
+    ];
+
+    // Validate paidBy is a trip member
+    if (!tripMemberIds.includes(paidBy)) {
+      throw new Error("Payer must be a trip member");
+    }
+
+    // Calculate equal split among all members
+    const splitAmount = Math.round((amount / tripMemberIds.length) * 100) / 100;
+
+    // Update expense and handle payment in transaction
+    await prisma.$transaction(async (tx) => {
+      // Update expense
+      await tx.expense.update({
+        where: { id: expenseId },
+        data: {
+          description,
+          amount,
+          category,
+        },
+      });
+
+      // If payment exists, update it
+      if (expense.payment) {
+        // Delete old splits
+        await tx.paymentSplit.deleteMany({
+          where: { paymentId: expense.payment.id },
+        });
+
+        // Update payment
+        await tx.payment.update({
+          where: { id: expense.payment.id },
+          data: {
+            paidBy,
+            amount,
+            description,
+            category,
+            splits: {
+              create: tripMemberIds.map((userId) => ({
+                userId,
+                amount: splitAmount,
+                settled: userId === paidBy,
+              })),
+            },
+          },
+        });
+      } else {
+        // Create new payment if it didn't exist
+        await tx.payment.create({
+          data: {
+            tripId,
+            paidBy,
+            amount,
+            currency: "SGD",
+            description,
+            category,
+            expenseId: expense.id,
+            splitType: "equal",
+            splits: {
+              create: tripMemberIds.map((userId) => ({
+                userId,
+                amount: splitAmount,
+                settled: userId === paidBy,
+              })),
+            },
+          },
+        });
+      }
+    });
+  } else {
+    // No paidBy provided, just update expense and delete payment if it exists
+    await prisma.$transaction(async (tx) => {
+      await tx.expense.update({
+        where: { id: expenseId },
+        data: {
+          description,
+          amount,
+          category,
+        },
+      });
+
+      // If there was a payment, delete it
+      if (expense.payment) {
+        await tx.payment.delete({
+          where: { id: expense.payment.id },
+        });
+      }
+    });
+  }
 
   revalidatePath(`/trips/${tripId}`);
   return { success: true };
